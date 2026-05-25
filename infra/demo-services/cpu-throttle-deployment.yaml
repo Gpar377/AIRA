@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-throttle-service
+  labels:
+    app: cpu-throttle-service
+    failure-mode: cpu-throttle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpu-throttle-service
+  template:
+    metadata:
+      labels:
+        app: cpu-throttle-service
+        failure-mode: cpu-throttle
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: cpu-throttle
+        image: neuralops/cpu-throttle-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        - name: WORK_ITERATIONS
+          value: "1000000"
+        - name: THROTTLE_ENABLED
+          value: "true"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpu-throttle-service
+  labels:
+    app: cpu-throttle-service
+spec:
+  selector:
+    app: cpu-throttle-service
+  ports:
+  - port: 8081
+    targetPort: 8081
+    name: http
+  type: ClusterIP
