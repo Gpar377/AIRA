@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+*.env
+!*.env.example
+!*.env.template
+
+# ML models (large files)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+models/
+checkpoints/
+
+# Data
+*.csv
+*.parquet
+!data/samples/*.csv
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Node
+node_modules/
+dist/
+.next/
+
+# K8s secrets
+*secret*.yaml
+*-secret.yaml
+
+# Memory store runtime
+sentinel/memory_store/*.json
+
+# Training artifacts
+training/runs/
+training/outputs/
+wandb/
