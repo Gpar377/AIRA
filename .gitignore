@@ -60,3 +60,9 @@ sentinel/memory_store/*.json
 training/runs/
 training/outputs/
 wandb/
+
+# Relational Databases
+*.db
+*.sqlite
+*.sqlite3
+
