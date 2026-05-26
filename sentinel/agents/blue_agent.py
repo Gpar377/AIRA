@@ -24,8 +24,8 @@ from google.genai import types
 
 from config import settings
 from state import ArenaState, DefenseAction, ArenaEvent
-from tools.mock_kubectl import execute_defense
-from tools.mock_scanner import get_all_vulnerabilities, calculate_attack_surface_score
+from tools.real_kubectl import execute_defense
+from tools.real_scanner import get_all_vulnerabilities, calculate_attack_surface_score
 from memory import get_blue_context
 from llm_utils import call_gemini, BlueActionSchema
 
