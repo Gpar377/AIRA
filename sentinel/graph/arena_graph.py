@@ -148,7 +148,7 @@ def build_arena_graph():
 def create_initial_state(memory: dict, max_rounds: int = None) -> ArenaState:
     """Build the initial ArenaState for a new arena run."""
     from mock_cluster import get_cluster, reset_cluster
-    from tools.mock_scanner import get_all_vulnerabilities, calculate_attack_surface_score
+    from tools.real_scanner import get_all_vulnerabilities, calculate_attack_surface_score
 
     reset_cluster()
     cluster = get_cluster()

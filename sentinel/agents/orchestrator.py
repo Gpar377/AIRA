@@ -24,7 +24,7 @@ from governance.opa_engine import (
     build_opa_decision_log,
 )
 from config import settings
-from tools.mock_kubectl import execute_defense
+from tools.real_kubectl import execute_defense
 
 
 def orchestrator_node(state: ArenaState) -> Dict[str, Any]:

@@ -22,7 +22,7 @@ from google.genai import types
 
 from config import settings
 from state import ArenaState, AttackAction, ArenaEvent
-from tools.mock_scanner import get_all_vulnerabilities, calculate_attack_surface_score
+from tools.real_scanner import get_all_vulnerabilities, calculate_attack_surface_score
 from memory import get_red_context
 from llm_utils import call_gemini, RedActionSchema
 
