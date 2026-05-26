@@ -136,22 +136,22 @@ def diagnose_node(state: HealingState) -> HealingState:
     # Rule-based root cause mapping (Phase 1)
     ROOT_CAUSE_MAP = {
         "memory_leak": {
-            "cause": "Container memory growing linearly without release — likely unbounded "
+            "cause": "Container memory growing linearly without release - likely unbounded "
                      "cache, connection pool leak, or buffer accumulation",
             "indicators": "memory_usage_pct rising steadily, restart_count stable",
         },
         "cpu_throttle": {
-            "cause": "CPU usage hitting cgroup limits — periodic computation spike or "
+            "cause": "CPU usage hitting cgroup limits - periodic computation spike or "
                      "runaway thread consuming all available CPU shares",
             "indicators": "cpu_usage_pct spiking periodically, throttle_count increasing",
         },
         "cascading_timeout": {
-            "cause": "Downstream service latency propagating upstream — likely database "
+            "cause": "Downstream service latency propagating upstream - likely database "
                      "slowdown or network partition causing retry storms",
             "indicators": "http_latency_p99 exponential growth, error_rate climbing",
         },
         "disk_pressure": {
-            "cause": "Disk usage approaching capacity — log accumulation, temp files not "
+            "cause": "Disk usage approaching capacity - log accumulation, temp files not "
                      "cleaned, or PVC undersized for workload",
             "indicators": "disk_usage_bytes growing steadily, inode count rising",
         },
@@ -299,11 +299,11 @@ def heal_node(state: HealingState) -> HealingState:
     state["action_result"] = result
     state["execution_time_seconds"] = round(elapsed, 3)
 
-    emoji = "✅" if success else "❌"
+    status_str = "[OK]" if success else "[ERROR]"
     state["events"].append({
         "timestamp": datetime.utcnow().isoformat(),
         "node": "heal",
-        "message": f"[HEAL] {emoji} {action} on {ns}/{pod} | {result}",
+        "message": f"[HEAL] {status_str} {action} on {ns}/{pod} | {result}",
     })
 
     return state
@@ -338,7 +338,7 @@ def remember_node(state: HealingState) -> HealingState:
         "timestamp": datetime.utcnow().isoformat(),
         "node": "remember",
         "message": f"[REMEMBER] Stored: {learning_entry['failure_class']} "
-                   f"→ {learning_entry['action_taken']} → {outcome} | "
+                   f"-> {learning_entry['action_taken']} -> {outcome} | "
                    f"Next time: {'skip trial-and-error' if outcome == 'SUCCESS' else 'try secondary action'}",
     })
 
