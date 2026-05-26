@@ -31,7 +31,8 @@ from neuralops.prediction.lstm_model import (
     NeuralOpsLSTM, FAILURE_CLASSES, FEATURE_NAMES,
     N_FEATURES, N_CLASSES
 )
-from neuralops.data.synthetic_metrics.generator import generate_all_failure_patterns
+# Note: trainer has its own generate_single_pattern() for LSTM-compatible data
+# The generator.py in data/synthetic_metrics/ is for CSV/JSON export only
 
 
 # ─────────────────────────────────────────────────────────────────────────────
