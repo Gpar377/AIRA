@@ -1,0 +1,744 @@
+/* 
+=============================================================================
+  AIRA Command Center CSS — Glassmorphism Design System
+  Vibrant colors, dark backgrounds, high-tech neon glows, and custom animations.
+=============================================================================
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Colors */
+  --bg-primary: #0a0c14;
+  --bg-secondary: #101424;
+  --card-bg: rgba(22, 28, 48, 0.7);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(255, 255, 255, 0.2);
+  
+  --color-red: #ff3838;
+  --color-red-glow: rgba(255, 56, 56, 0.25);
+  --color-cyan: #00ecff;
+  --color-cyan-glow: rgba(0, 236, 255, 0.25);
+  --color-yellow: #ffd32a;
+  --color-yellow-glow: rgba(255, 211, 42, 0.25);
+  --color-green: #05c46b;
+  --color-green-glow: rgba(5, 196, 107, 0.25);
+  
+  --text-primary: #f1f2f6;
+  --text-secondary: #a4b0be;
+  --text-muted: #57606f;
+
+  /* Font selection */
+  --font-sans: 'Outfit', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0, 236, 255, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(255, 56, 56, 0.03) 0%, transparent 40%);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   App Layout
+   ───────────────────────────────────────────────────────────────────────────── */
+
+header {
+  height: 70px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-title-section h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-badge {
+  background: rgba(0, 236, 255, 0.1);
+  border: 1px solid var(--color-cyan);
+  color: var(--color-cyan);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px rgba(0, 236, 255, 0.15);
+}
+
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-green);
+  box-shadow: 0 0 10px var(--color-green-glow);
+  position: relative;
+}
+
+.status-dot.active {
+  animation: pulse-green 1.5s infinite;
+}
+
+.status-dot.offline {
+  background-color: var(--text-muted);
+  box-shadow: none;
+}
+
+/* Dashboard Core Grid */
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 360px 1fr 380px;
+  gap: 20px;
+  padding: 20px;
+  height: calc(100vh - 70px);
+  overflow: hidden;
+}
+
+/* Column Wrappers */
+.dashboard-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Card Styling (Glassmorphism) */
+.aira-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+
+.aira-card:hover {
+  border-color: var(--border-active);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.aira-card-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aira-card-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aira-card-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Sentinel Panel (Left)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sentinel-gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+/* Glowing Circular Gauge */
+.gauge-svg-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.gauge-svg-wrapper svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.gauge-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 10;
+}
+
+.gauge-fill {
+  fill: none;
+  stroke: var(--color-red);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 440;
+  stroke-dashoffset: 200;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 6px var(--color-red));
+}
+
+.gauge-text-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gauge-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.gauge-lbl {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Button UI */
+.aira-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-red) 0%, #d63031 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 15px var(--color-red-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 56, 56, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-yellow);
+  border: 1px solid var(--color-yellow);
+  margin-top: 10px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 211, 42, 0.1);
+  box-shadow: 0 0 10px var(--color-yellow-glow);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* OPA Status Box */
+.policy-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-top: 15px;
+}
+
+.policy-card-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.policy-card-item:last-child {
+  margin-bottom: 0;
+}
+
+.policy-val-active {
+  color: var(--color-green);
+  font-weight: 600;
+}
+
+/* Timeline/List items */
+.timeline-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.timeline-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Cluster Topology Panel (Center)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#cluster-map-card {
+  flex: 3;
+}
+
+.cluster-grid-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.svg-cluster-grid {
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+}
+
+.k8s-pod-node {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.k8s-pod-node circle {
+  fill: #1e272e;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  transition: all 0.3s ease;
+}
+
+.k8s-pod-node:hover circle {
+  stroke: var(--color-cyan);
+  filter: drop-shadow(0 0 4px var(--color-cyan));
+}
+
+.k8s-pod-node.attacked circle {
+  stroke: var(--color-red);
+  fill: rgba(255, 56, 56, 0.15);
+  animation: pulse-red-node 1.5s infinite;
+  filter: drop-shadow(0 0 8px var(--color-red));
+}
+
+.k8s-pod-node.patched circle {
+  stroke: var(--color-cyan);
+  fill: rgba(0, 236, 255, 0.15);
+  filter: drop-shadow(0 0 8px var(--color-cyan));
+}
+
+.k8s-pod-text {
+  font-size: 10px;
+  fill: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.k8s-pod-node.attacked .k8s-pod-text {
+  fill: var(--color-red);
+  font-weight: bold;
+}
+
+.k8s-pod-node.patched .k8s-pod-text {
+  fill: var(--color-cyan);
+  font-weight: bold;
+}
+
+/* Legend */
+.cluster-legend {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  display: flex;
+  gap: 15px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.legend-dot.threat { background: var(--color-red); box-shadow: 0 0 6px var(--color-red-glow); }
+.legend-dot.shield { background: var(--color-cyan); box-shadow: 0 0 6px var(--color-cyan-glow); }
+
+/* Live Battle Feed (Center Bottom) */
+#battle-feed-card {
+  flex: 2;
+}
+
+.battle-logs-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 12px;
+  line-height: 1.5;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.01);
+  border-left: 3px solid var(--text-muted);
+}
+
+.log-entry.red {
+  border-left-color: var(--color-red);
+  background: rgba(255, 56, 56, 0.02);
+}
+
+.log-entry.blue {
+  border-left-color: var(--color-cyan);
+  background: rgba(0, 236, 255, 0.02);
+}
+
+.log-entry.orchestrator {
+  border-left-color: var(--color-yellow);
+  background: rgba(255, 211, 42, 0.02);
+}
+
+.log-entry.system {
+  border-left-color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.log-time {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.log-tag {
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 40px;
+}
+
+.log-entry.red .log-tag { color: var(--color-red); }
+.log-entry.blue .log-tag { color: var(--color-cyan); }
+.log-entry.orchestrator .log-tag { color: var(--color-yellow); }
+.log-entry.system .log-tag { color: var(--text-primary); }
+
+.log-msg {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   NeuralOps Panel (Right)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Anomaly Warning Radar Panel */
+.radar-card-body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(255, 56, 56, 0.03);
+  border: 1px solid rgba(255, 56, 56, 0.15);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.radar-card-body.alarm {
+  animation: pulse-red-bg 2s infinite;
+  border-color: var(--color-red);
+}
+
+.radar-dish {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.radar-card-body.alarm .radar-dish {
+  border-color: var(--color-red);
+}
+
+.radar-ping {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--color-red);
+  opacity: 0;
+}
+
+.radar-card-body.alarm .radar-ping {
+  animation: radar-ping-expand 1.5s infinite;
+}
+
+.radar-text h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.radar-text p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Reliability Predictions Table */
+.predictions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.predictions-table th, .predictions-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.predictions-table th {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.probability-bar-outer {
+  width: 70px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.probability-bar-inner {
+  height: 100%;
+  border-radius: 3px;
+  background-color: var(--color-cyan);
+}
+
+.probability-bar-inner.high { background-color: var(--color-yellow); }
+.probability-bar-inner.critical { background-color: var(--color-red); }
+
+.table-pod-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Custom Healing Timeline */
+.healing-agent-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.healer-step {
+  display: flex;
+  gap: 15px;
+  position: relative;
+}
+
+.healer-step::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 8px;
+  width: 2px;
+  height: calc(100% + 5px);
+  background: var(--border-color);
+  z-index: 1;
+}
+
+.healer-step:last-child::after {
+  display: none;
+}
+
+.healer-step-indicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.healer-step.active .healer-step-indicator {
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 8px var(--color-cyan-glow);
+  background: var(--color-cyan);
+}
+
+.healer-step.completed .healer-step-indicator {
+  border-color: var(--color-green);
+  background: var(--color-green);
+}
+
+.healer-step-content {
+  flex: 1;
+}
+
+.healer-step-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.healer-step.active .healer-step-title {
+  color: var(--color-cyan);
+}
+
+.healer-step.completed .healer-step-title {
+  color: var(--color-green);
+}
+
+.healer-step-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-family: var(--font-mono);
+}
+
+.healer-step.active .healer-step-desc {
+  color: var(--text-primary);
+}
+
+
+/* Scrollbars customisation */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Keyframe Animations
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes pulse-green {
+  0% { transform: scale(1); box-shadow: 0 0 10px rgba(5, 196, 107, 0.4); }
+  50% { transform: scale(1.15); box-shadow: 0 0 18px rgba(5, 196, 107, 0.7); }
+  100% { transform: scale(1); box-shadow: 0 0 10px rgba(5, 196, 107, 0.4); }
+}
+
+@keyframes pulse-red-node {
+  0% { box-shadow: 0 0 8px rgba(255, 56, 56, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(255, 56, 56, 0.6); }
+  100% { box-shadow: 0 0 8px rgba(255, 56, 56, 0.3); }
+}
+
+@keyframes pulse-red-bg {
+  0% { background: rgba(255, 56, 56, 0.02); }
+  50% { background: rgba(255, 56, 56, 0.06); }
+  100% { background: rgba(255, 56, 56, 0.02); }
+}
+
+@keyframes radar-ping-expand {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}

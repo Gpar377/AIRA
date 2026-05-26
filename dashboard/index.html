@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRA Unified Command Center</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Dashboard Top Header -->
+  <header>
+    <div class="header-title-section">
+      <h1>AIRA COMMAND CENTER</h1>
+      <span class="header-badge" id="app-badge-status">Phase 1: Local</span>
+    </div>
+    
+    <div class="system-status">
+      <div class="status-indicator">
+        <span>Session ID:</span>
+        <strong id="display-session-id" style="font-family: var(--font-mono); color: var(--color-cyan);">--------</strong>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot active" id="sys-status-dot"></span>
+        <span id="sys-status-text">SYSTEM SECURE</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main>
+  
+    <!-- COLUMN 1: SENTINELARENA (Security Operations) -->
+    <section class="dashboard-col">
+    
+      <!-- Card 1.1: Security Score Gauge -->
+      <div class="aira-card">
+        <div class="aira-card-header">
+          <h2>🛡️ Security Score</h2>
+          <span style="font-size: 11px; color: var(--color-red); font-weight: bold;" id="score-delta-label">+0.0</span>
+        </div>
+        <div class="aira-card-body">
+          <div class="sentinel-gauge-container">
+            <div class="gauge-svg-wrapper">
+              <svg viewBox="0 0 160 160">
+                <circle class="gauge-bg" cx="80" cy="80" r="70" />
+                <circle class="gauge-fill" id="security-gauge-stroke" cx="80" cy="80" r="70" />
+              </svg>
+              <div class="gauge-text-overlay">
+                <span class="gauge-value" id="security-gauge-val">100</span>
+                <span class="gauge-lbl">EXPOSURE</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Run Controls -->
+          <div style="margin-top: 15px;">
+            <button class="aira-btn btn-primary" id="btn-start-sentinel">
+              <span>⚔️ Start Security Run</span>
+            </button>
+            <button class="aira-btn btn-secondary" id="btn-stop-sentinel" disabled>
+              <span>🚨 Emergency Stop</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card 1.2: Governance Policies -->
+      <div class="aira-card" style="flex: 1;">
+        <div class="aira-card-header">
+          <h2>⚙️ OPA Governance Gate</h2>
+        </div>
+        <div class="aira-card-body">
+          <div class="policy-card">
+            <div class="policy-card-item">
+              <span>Blast Radius Limit:</span>
+              <span class="policy-val-active">0.75 max</span>
+            </div>
+            <div class="policy-card-item">
+              <span>Namespace Locks:</span>
+              <span class="policy-val-active">kube-system, gatekeeper</span>
+            </div>
+            <div class="policy-card-item">
+              <span>Kill Switch Guard:</span>
+              <span class="policy-val-active">Enabled</span>
+            </div>
+          </div>
+          
+          <h3 style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin: 15px 0 8px 0; letter-spacing: 0.5px;">
+            OPA Governance Decisions
+          </h3>
+          <div class="timeline-mini" id="opa-decisions-list">
+            <!-- Dynamic OPA records populate here -->
+            <div class="timeline-item">
+              <span style="color: var(--text-muted);">No policies evaluated yet.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </section>
+
+    <!-- COLUMN 2: CLUSTER TOPOLOGY MAP & BATTLE FEED (Center) -->
+    <section class="dashboard-col">
+    
+      <!-- Card 2.1: Cluster Map Topology -->
+      <div class="aira-card" id="cluster-map-card">
+        <div class="aira-card-header">
+          <h2>🌐 Kubernetes Cluster Landscape</h2>
+          <span style="font-family: var(--font-mono); font-size: 11px;" id="pods-count-label">8 Pods Loaded</span>
+        </div>
+        <div class="aira-card-body">
+          <div class="cluster-grid-container">
+            <svg class="svg-cluster-grid" id="cluster-svg-landscape">
+              <!-- Grid background pattern -->
+              <defs>
+                <pattern id="grid-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.015)" stroke-width="1" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+              
+              <!-- Connection paths back to gateway -->
+              <g id="svg-cluster-links"></g>
+              
+              <!-- Pod node circles and titles -->
+              <g id="svg-cluster-nodes"></g>
+            </svg>
+            
+            <div class="cluster-legend">
+              <div class="legend-item"><span class="legend-dot"></span><span>Exposed</span></div>
+              <div class="legend-item"><span class="legend-dot threat"></span><span>Attacking</span></div>
+              <div class="legend-item"><span class="legend-dot shield"></span><span>Hardened</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card 2.2: Live Battle Logs -->
+      <div class="aira-card" id="battle-feed-card">
+        <div class="aira-card-header">
+          <h2>⚡ Live Agent Battle Feed</h2>
+          <button style="background: none; border: none; color: var(--color-cyan); font-size: 11px; cursor: pointer; text-transform: uppercase; font-weight: 600;" id="btn-clear-battle-logs">Clear</button>
+        </div>
+        <div class="aira-card-body" id="battle-logs-scroll-container">
+          <div class="battle-logs-wrapper" id="battle-logs-output">
+            <div class="log-entry system">
+              <span class="log-time">00:00:00</span>
+              <span class="log-tag">SYS</span>
+              <span class="log-msg">Welcome to the AIRA Unified Dashboard. Ready to monitor security runs...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </section>
+
+    <!-- COLUMN 3: NEURALOPS (Reliability & Auto-Healing) -->
+    <section class="dashboard-col">
+    
+      <!-- Radar Alarm Indicator -->
+      <div class="radar-card-body" id="radar-anomaly-card">
+        <div class="radar-dish">
+          <div class="radar-ping"></div>
+          <span style="font-size: 16px;">📡</span>
+        </div>
+        <div class="radar-text">
+          <h3 id="radar-alarm-title">NO ACTIVE ALERTS</h3>
+          <p id="radar-alarm-desc">Pod metrics stable. Predictor engine scanning...</p>
+        </div>
+      </div>
+      
+      <!-- Card 3.1: Reliability Predictor Panel -->
+      <div class="aira-card">
+        <div class="aira-card-header">
+          <h2>📊 Pod Metric Predictors</h2>
+        </div>
+        <div class="aira-card-body" style="padding: 0;">
+          <table class="predictions-table">
+            <thead>
+              <tr>
+                <th>Pod Name</th>
+                <th>Failure Risk</th>
+                <th>TTF</th>
+                <th>Heal</th>
+              </tr>
+            </thead>
+            <tbody id="pods-predictions-tbody">
+              <!-- Pod rows get rendered dynamically -->
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No predictions scanned.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Card 3.2: Healing Agent Reasoning Pipeline -->
+      <div class="aira-card" style="flex: 1;">
+        <div class="aira-card-header">
+          <h2>🔧 LangGraph Healing Steps</h2>
+          <span style="font-size: 11px; color: var(--color-cyan); font-weight: bold;" id="healer-status-badge">STANDBY</span>
+        </div>
+        <div class="aira-card-body">
+          <div class="healing-agent-timeline">
+            
+            <div class="healer-step" id="step-predict">
+              <div class="healer-step-indicator"></div>
+              <div class="healer-step-content">
+                <div class="healer-step-title">1. Predict Anomaly</div>
+                <div class="healer-step-desc" id="step-desc-predict">LSTM scans metrics window. Anomaly detected.</div>
+              </div>
+            </div>
+            
+            <div class="healer-step" id="step-diagnose">
+              <div class="healer-step-indicator"></div>
+              <div class="healer-step-content">
+                <div class="healer-step-title">2. Diagnose Cause</div>
+                <div class="healer-step-desc" id="step-desc-diagnose">Autonomously analyzing telemetry root cause.</div>
+              </div>
+            </div>
+            
+            <div class="healer-step" id="step-decide">
+              <div class="healer-step-indicator"></div>
+              <div class="healer-step-content">
+                <div class="healer-step-title">3. Decide Remediation</div>
+                <div class="healer-step-desc" id="step-desc-decide">Match action against autonomy tier catalog.</div>
+              </div>
+            </div>
+            
+            <div class="healer-step" id="step-heal">
+              <div class="healer-step-indicator"></div>
+              <div class="healer-step-content">
+                <div class="healer-step-title">4. Healing Action</div>
+                <div class="healer-step-desc" id="step-desc-heal">Execute patch via k8s_client (restart, scale).</div>
+              </div>
+            </div>
+            
+            <div class="healer-step" id="step-remember">
+              <div class="healer-step-indicator"></div>
+              <div class="healer-step-content">
+                <div class="healer-step-title">5. Remember Incident</div>
+                <div class="healer-step-desc" id="step-desc-remember">Log outcome in Postgres memory to learn.</div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      
+    </section>
+    
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
