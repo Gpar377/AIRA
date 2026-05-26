@@ -33,7 +33,7 @@ try:
     print(f"    OK  {len(vulns)} vulnerabilities found | Score: {score}/100")
     for v in vulns:
         status = "PATCHED" if v["patched"] else "EXPOSED"
-        print(f"         [{v['severity']:8}] [{status}] {v['id']} — {v['namespace']}/{v['resource'][:40]}")
+        print(f"         [{v['severity']:8}] [{status}] {v['id']} - {v['namespace']}/{v['resource'][:40]}")
 except Exception as e:
     print(f"    FAIL: {e}")
     import traceback; traceback.print_exc()
@@ -41,29 +41,29 @@ except Exception as e:
 # Test 3: OPA Engine
 print("\n[3/5] Testing OPA governance engine...")
 try:
-    # Should DENY — protected namespace
+    # Should DENY - protected namespace
     ok, reason, sev = evaluate_red_action({
         "target_namespace": "kube-system",
         "vuln_type": "rbac", "target_resource": "etcd",
         "method": "test", "blast_radius": 0.3
     })
-    print(f"    {'OK' if not ok else 'FAIL'}  kube-system block → allowed={ok}, reason={reason}")
+    print(f"    {'OK' if not ok else 'FAIL'}  kube-system block -> allowed={ok}, reason={reason}")
 
-    # Should DENY — blast radius too high
+    # Should DENY - blast radius too high
     ok2, reason2, sev2 = evaluate_red_action({
         "target_namespace": "default",
         "vuln_type": "secret", "target_resource": "db-secret",
         "method": "test", "blast_radius": 0.9
     })
-    print(f"    {'OK' if not ok2 else 'FAIL'}  blast_radius block → allowed={ok2}, reason={reason2}")
+    print(f"    {'OK' if not ok2 else 'FAIL'}  blast_radius block -> allowed={ok2}, reason={reason2}")
 
-    # Should ALLOW — normal attack
+    # Should ALLOW - normal attack
     ok3, reason3, sev3 = evaluate_red_action({
         "target_namespace": "default",
         "vuln_type": "secret", "target_resource": "db-secret",
         "method": "read env vars", "blast_radius": 0.4
     })
-    print(f"    {'OK' if ok3 else 'FAIL'}  normal attack allow → allowed={ok3}, reason={reason3}")
+    print(f"    {'OK' if ok3 else 'FAIL'}  normal attack allow -> allowed={ok3}, reason={reason3}")
 except Exception as e:
     print(f"    FAIL: {e}")
     import traceback; traceback.print_exc()
@@ -72,13 +72,13 @@ except Exception as e:
 print("\n[4/5] Testing mock kubectl defenses...")
 try:
     success, msg = execute_defense("rbac_patch", "default", "pod-reader")
-    print(f"    {'OK' if success else 'WARN'}  rbac_patch → {msg}")
+    print(f"    {'OK' if success else 'WARN'}  rbac_patch -> {msg}")
 
     success2, msg2 = execute_defense("secret_rotation", "default", "db-secret")
-    print(f"    {'OK' if success2 else 'WARN'}  secret_rotation → {msg2}")
+    print(f"    {'OK' if success2 else 'WARN'}  secret_rotation -> {msg2}")
 
     success3, msg3 = execute_defense("network_policy", "default", "default")
-    print(f"    {'OK' if success3 else 'WARN'}  network_policy → {msg3}")
+    print(f"    {'OK' if success3 else 'WARN'}  network_policy -> {msg3}")
 
     # Re-scan after patches
     vulns2 = get_all_vulnerabilities()
@@ -93,7 +93,7 @@ print("\n[5/5] Testing battle memory...")
 try:
     from memory import empty_memory, record_round, get_red_context, get_blue_context
     mem = empty_memory()
-    print(f"    OK  Empty memory created — arena_id: {mem['arena_id']}")
+    print(f"    OK  Empty memory created - arena_id: {mem['arena_id']}")
 
     # Simulate a round
     mock_attack = {
@@ -109,7 +109,7 @@ try:
         "score_delta": -14.3, "pre_emptive": False,
     }
     mem = record_round(mem, 1, mock_attack, mock_defense, 87.0, 72.7, "allowed")
-    print(f"    OK  Round 1 recorded — red_learned: {mem['red_learned']}")
+    print(f"    OK  Round 1 recorded - red_learned: {mem['red_learned']}")
     print(f"    OK  Blue patched: {mem['patched_resources']}")
 
     red_ctx = get_red_context(mem)
