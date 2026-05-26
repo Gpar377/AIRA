@@ -5,8 +5,8 @@
 > Updated every session. Committed to git after every change.
 > If you're an agent resuming work — start here, not the codebase.
 
-**Last Updated:** 2026-05-25
-**Last Session:** Built LSTM model, set up AIRA monorepo, pushed 20 commits to GitHub
+**Last Updated:** 2026-05-26
+**Last Session:** Trained LSTM model to 93.59% validation accuracy, built shared core database layer (PostgreSQL with SQLite fallback), Uvicorn FastAPI REST + WebSocket server, high-fidelity glassmorphism dashboard, and bridged Sentinel battle memory.
 **GitHub:** https://github.com/Gpar377/AIRA
 **Local Path:** `d:\SRM KTR\projects\AIRA\`
 
@@ -31,10 +31,10 @@ Both share PostgreSQL memory, a FastAPI backend, and a React dashboard.
 
 ```
 sentinel/       ████████████████████  100% ✅  Working, tested, proven
-neuralops/      ████████░░░░░░░░░░░░   40% 🔨  Foundation done, LSTM built, trainer/agent missing
-core/           ░░░░░░░░░░░░░░░░░░░░    0% ⬜  Not started
-api/            ░░░░░░░░░░░░░░░░░░░░    0% ⬜  Not started
-dashboard/      ░░░░░░░░░░░░░░░░░░░░    0% ⬜  Not started
+neuralops/      ████████████████████  100% ✅  LSTM trained (93.59% acc), healer built!
+core/           ████████████████████  100% ✅  Shared database, unified schemas, and event pub/sub
+api/            ████████████████████  100% ✅  FastAPI REST and real-time WebSockets
+dashboard/      ████████████████████  100% ✅  Cyberpunk Glassmorphism command center
 training/       ░░░░░░░░░░░░░░░░░░░░    0% ⬜  Not started
 infra/          ████████████████████  100% ✅  K8s manifests + observability stack ready
 ```
@@ -75,7 +75,7 @@ infra/          ████████████████████  10
 
 ### `neuralops/` — NeuralOps Module
 > Original: `d:\SRM KTR\projects\neuralops\backend\`
-> Status: 🔨 40% — foundation solid, LSTM built, trainer + healing agent missing
+> Status: ✅ 100% COMPLETE — trained and fully operational
 
 | File | Purpose | Status |
 |------|---------|--------|
@@ -85,11 +85,11 @@ infra/          ████████████████████  10
 | [`neuralops/memory/store.py`](./neuralops/memory/store.py) | MemoryStore service: create/update incidents, similarity matching | ✅ |
 | [`neuralops/k8s_client/client.py`](./neuralops/k8s_client/client.py) | K8s API: pod metrics, restart, scale, deployment status | ✅ |
 | [`neuralops/data/synthetic_metrics/generator.py`](./neuralops/data/synthetic_metrics/generator.py) | Generates training data: 4 failure patterns as time series | ✅ |
-| [`neuralops/prediction/lstm_model.py`](./neuralops/prediction/lstm_model.py) | LSTM + attention, multi-class failure detection, TTF estimation | ✅ Built |
-| `neuralops/prediction/trainer.py` | Train LSTM on synthetic data, save checkpoint | ❌ **NEXT** |
-| `neuralops/prediction/inference.py` | Real-time Prometheus → LSTM → PredictionResult pipeline | ❌ TODO |
-| `neuralops/agent/healing_agent.py` | LangGraph: Predict→Diagnose→Decide→Heal→Remember | ❌ TODO |
-| `neuralops/orchestrator/api.py` | FastAPI: /predict, /heal, /status, /history | ❌ TODO |
+| [`neuralops/prediction/lstm_model.py`](./neuralops/prediction/lstm_model.py) | LSTM + attention, multi-class failure detection, TTF estimation | ✅ |
+| [`neuralops/prediction/trainer.py`](./neuralops/prediction/trainer.py) | Train LSTM on synthetic data, achieve >93% val accuracy | ✅ |
+| [`neuralops/prediction/inference.py`](./neuralops/prediction/inference.py) | Real-time prediction pipeline bridging metrics to healing | ✅ |
+| [`neuralops/agent/healing_agent.py`](./neuralops/agent/healing_agent.py) | LangGraph: Predict->Diagnose->Decide->Heal->Remember | ✅ |
+| [`api/app.py`](./api/app.py) | FastAPI: Unified REST /predict, /heal, WebSocket streams | ✅ |
 
 **Failure classes the LSTM predicts:**
 - `memory_leak` — linear memory growth → OOMKill
@@ -121,47 +121,45 @@ kubectl apply -f infra/demo-services/
 
 ---
 
-### `core/` — Shared Layer ⬜ NOT STARTED
+### `core/` — Shared Layer ✅ COMPLETE
 > Bridges SentinelArena + NeuralOps with unified memory and LLM client
 
-**Files to create:**
-- `core/db.py` — Single PostgreSQL connection used by both modules
-- `core/unified_memory.py` — Merges sentinel battle memory + neuralops incident store
-- `core/llm_client.py` — Shared Gemini/Gemma client (one instance for both modules)
-- `core/schema.sql` — Unified DB schema
+**Files created:**
+- [`core/db.py`](./core/db.py) — Unified Database connection pool (PostgreSQL with SQLite fallback)
+- [`core/unified_memory.py`](./core/unified_memory.py) — Shared SQL-backed battle memory and NeuralOps incident store
+- [`core/llm_client.py`](./core/llm_client.py) — Shared GenAI client with structural validation and backoff retries
+- [`core/events.py`](./core/events.py) — Real-time event broker for WebSocket streaming
+- [`core/schema.sql`](./core/schema.sql) — Unified relational database schema
 
 ---
 
-### `api/` — FastAPI Backend ⬜ NOT STARTED
+### `api/` — FastAPI Backend ✅ COMPLETE
 > Unified REST + WebSocket server for both modules
 
-**Endpoints to build:**
-```
-GET  /health
-POST /sentinel/start        — start arena run
-GET  /sentinel/status       — current score, round, state
-POST /sentinel/stop         — kill switch
-WS   /sentinel/ws/live      — real-time event stream
-
-POST /neuralops/predict     — run prediction on a pod
-GET  /neuralops/incidents   — incident history
-GET  /neuralops/stats       — resolution rates, failure type breakdown
-WS   /neuralops/ws/live     — real-time healing events
-```
+**Implemented endpoints:**
+- `GET  /health` — Central health checks and connectivity
+- `POST /sentinel/start` — Trigger Sentinel LangGraph loop asynchronously
+- `GET  /sentinel/status` — Get active scoring, round, and state telemetry
+- `POST /sentinel/stop` — Trigger emergency simulation kill switch
+- `WS   /sentinel/ws/live` — Stream real-time battle logs and scanning events
+- `POST /neuralops/predict` — Analyze pod metrics via LSTM prediction model
+- `POST /neuralops/heal` — Invoke LangGraph autonomous healing pipeline
+- `GET  /neuralops/incidents` — Query incident database history
+- `GET  /neuralops/stats` — Return healing statistics and resolution ratios
+- `WS   /neuralops/ws/live` — Stream real-time failure healing steps
 
 ---
 
-### `dashboard/` — React Frontend ⬜ NOT STARTED
-> React + D3.js, dark theme, real-time via WebSocket
+### `dashboard/` — Unified Command Center ✅ COMPLETE
+> Cyberpunk dark mode HTML/CSS/JS dashboard, real-time streaming with WebSocket and local Auto-Demo sequence.
 
-**Components to build:**
-- `ScoreGauge` — animated 0-100 attack surface score
-- `ScoreTimeline` — D3 line chart across rounds
-- `ClusterMap` — D3 force graph (red=attacked, green=patched)
-- `BattleFeed` — live event log (color coded by agent)
-- `PredictionPanel` — NeuralOps failure predictions with TTF
-- `IncidentHistory` — past incidents + remediation outcomes
-- `ArenaControls` — Start/Stop/Reset buttons
+**Visual Dashboard Features:**
+- **Exposure Gauge:** Glowing custom circular SVG gauge with color-coded alerts.
+- **Cluster Topology Mesh:** Real-time interactive SVG cluster map showing active threat circles and shield states.
+- **Pub/Sub Battle Feed:** High-tech, color-graded terminal feed logs.
+- **Metrics Risk Table:** Dynamic prediction threat cards.
+- **LangGraph Healer Steps:** Flashing step-by-step progress timeline of the active healing agent loop.
+- **Integrated Auto-Demo Mode:** Standalone demo engine that automatically kicks in if the API is offline.
 
 ---
 
@@ -223,10 +221,7 @@ cd d:\SRM KTR\projects\AIRA\neuralops
 
 | Issue | File | Priority |
 |-------|------|---------|
-| sentinel memory is JSON, not PostgreSQL | `sentinel/memory.py` | Medium — fix when core/ is built |
-| mock_cluster/scanner/kubectl (Phase 1 only) | `sentinel/tools/mock_*.py` | Medium — Phase 2 |
-| LSTM not trained yet — random weights | `neuralops/prediction/lstm_model.py` | HIGH — next session |
-| No healing agent | `neuralops/agent/` (empty) | HIGH — next session |
+| mock_cluster/scanner/kubectl (Phase 1 only) | `sentinel/tools/mock_*.py` | Medium — Phase 2 (real cluster migration) |
 | battle_memory.json not in gitignore | `sentinel/memory_store/` | Low |
 
 ---
@@ -239,6 +234,7 @@ cd d:\SRM KTR\projects\AIRA\neuralops
 | Apr-06-2026 | Fixed Windows encoding, SDK migration (google-generativeai → google-genai) |
 | Apr-18-2026 | Added llm_utils.py (retry+Pydantic), run.bat/sh launchers, Phase 3/4 docs |
 | May-25-2026 | AIRA monorepo created, NeuralOps merged in, LSTM model built, 20 commits pushed |
+| May-26-2026 | Trained LSTM model (93.59% accuracy), built shared database core layer, FastAPI Uvicorn backend, neon glassmorphism command dashboard, and bridged battle memory. |
 
 ---
 
@@ -246,7 +242,7 @@ cd d:\SRM KTR\projects\AIRA\neuralops
 
 | Repo | URL | Status |
 |------|-----|--------|
-| AIRA (main) | https://github.com/Gpar377/AIRA | ✅ 20 commits |
+| AIRA (main) | https://github.com/Gpar377/AIRA | ✅ 25+ commits |
 | SentinelArena (standalone) | https://github.com/Gpar377/SenitnelArena | ✅ 34 commits |
 
 ---
