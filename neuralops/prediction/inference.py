@@ -10,9 +10,14 @@ Usage:
     if pipeline.should_heal(result):
         healing_state = pipeline.trigger_healing(result)
 
+    # Phase 2 — pull live Prometheus metrics automatically:
+    result = pipeline.predict_from_live(pod_name, namespace)
+
 Phase 1: Accepts raw numpy arrays (from synthetic data or manual test).
-Phase 2: Pulls live metrics from Prometheus HTTP API automatically.
+Phase 2: Pulls live metrics from Prometheus HTTP API automatically via
+         prometheus_fetcher.PrometheusMetricsFetcher.
 """
+import logging
 import numpy as np
 import time
 from typing import Optional, Dict, List
@@ -23,6 +28,9 @@ from neuralops.prediction.lstm_model import (
     FEATURE_NAMES, N_FEATURES,
 )
 from neuralops.agent.healing_agent import run_healing_pipeline, HealingState
+from neuralops.prediction.prometheus_fetcher import PrometheusMetricsFetcher
+
+logger = logging.getLogger(__name__)
 
 
 class InferencePipeline:
@@ -104,6 +112,53 @@ class InferencePipeline:
             "healing_state": healing_state,
         }
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Phase 2 — Live Prometheus integration
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def predict_from_live(
+        self,
+        pod_name: str,
+        namespace: str = "default",
+        prometheus_url: str = "http://localhost:9090",
+        window_size: int = 60,
+        step_seconds: int = 15,
+    ) -> Dict:
+        """
+        Phase 2 entry point — fetches real Prometheus metrics and runs the
+        full predict + heal pipeline.
+
+        Falls back to synthetic data if Prometheus is unreachable.
+
+        Args:
+            pod_name:       K8s pod name
+            namespace:      K8s namespace
+            prometheus_url: Prometheus base URL
+            window_size:    Number of timesteps (default: 60)
+            step_seconds:   PromQL step resolution (default: 15s)
+
+        Returns:
+            Dict with prediction, triggered_healing, healed, healing_state,
+            and a 'data_source' key ('prometheus' | 'synthetic').
+        """
+        fetcher = PrometheusMetricsFetcher(
+            prometheus_url=prometheus_url,
+        )
+        live = fetcher.is_available()
+        window = fetcher.fetch_window(
+            pod_name, namespace,
+            window_size=window_size,
+            step_seconds=step_seconds,
+        )
+        result = self.predict_and_heal(window, pod_name, namespace)
+        result["data_source"] = "prometheus" if live else "synthetic"
+        logger.info(
+            "predict_from_live: pod=%s/%s source=%s anomaly=%s",
+            namespace, pod_name, result["data_source"],
+            result["prediction"].is_anomaly,
+        )
+        return result
+
     def get_stats(self) -> Dict:
         """Pipeline stats for monitoring."""
         total_predictions = len(self.prediction_history)
@@ -122,51 +177,12 @@ class InferencePipeline:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Prometheus Metrics Fetcher (Phase 2 stub)
+# Re-export PrometheusMetricsFetcher for backward-compat imports
 # ─────────────────────────────────────────────────────────────────────────────
-
-class PrometheusMetricsFetcher:
-    """
-    Phase 2: Fetches real-time metrics from Prometheus and formats them
-    into the (window_size, n_features) array the LSTM expects.
-
-    Phase 1: Generates synthetic windows for testing.
-    """
-
-    def __init__(self, prometheus_url: str = "http://localhost:9090"):
-        self.url = prometheus_url
-
-    def fetch_window(
-        self,
-        pod_name: str,
-        namespace: str,
-        window_size: int = 60,
-        step_seconds: int = 5,
-    ) -> np.ndarray:
-        """
-        Phase 2 will query:
-            container_memory_usage_bytes{pod="X", namespace="Y"}[5m]
-            container_cpu_usage_seconds_total{...}
-            ...etc for all 12 features
-
-        Phase 1: Returns synthetic data for testing.
-        """
-        # Phase 1 — synthetic test data
-        t = np.arange(window_size)
-        return np.column_stack([
-            200e6 + t * 1.5e6 + np.random.randn(window_size) * 5e6,    # memory_usage_bytes
-            np.full(window_size, 512e6),                                  # memory_limit_bytes
-            (200e6 + t * 1.5e6) / 512e6,                                # memory_usage_pct
-            0.1 + np.random.randn(window_size) * 0.03,                  # cpu_usage_cores
-            np.full(window_size, 0.5),                                   # cpu_limit_cores
-            0.2 + np.random.randn(window_size) * 0.06,                  # cpu_usage_pct
-            np.cumsum(np.random.poisson(0.01, window_size)),             # restart_count
-            np.abs(np.random.randn(window_size) * 1e6),                 # network_rx_bytes
-            np.abs(np.random.randn(window_size) * 5e5),                 # network_tx_bytes
-            t * 5000 + np.random.randn(window_size) * 1000,             # disk_usage_bytes
-            0.01 + np.random.randn(window_size) * 0.005,                # http_error_rate
-            50 + np.random.randn(window_size) * 10,                     # http_latency_p99
-        ])
+# PrometheusMetricsFetcher is now defined in prometheus_fetcher.py.
+# It is imported at the top of this file and re-exported here so that any
+# existing code that does `from inference import PrometheusMetricsFetcher` still works.
+__all__ = ["InferencePipeline", "PrometheusMetricsFetcher"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────

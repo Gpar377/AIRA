@@ -19,8 +19,13 @@ uvicorn>=0.27.0
 websockets>=12.0
 
 # Observability clients
+# Phase 2a: requests used by prometheus_fetcher.py to query Prometheus HTTP API
+# Phase 2c: requests used by k8s_client/client.py to query Loki and Jaeger APIs
 prometheus-client>=0.19.0
 requests>=2.31.0
+
+# Phase 2b: Trivy CLI must be installed separately (https://aquasecurity.github.io/trivy)
+# kubernetes SDK already listed above — used by real_scanner.py + real_kubectl.py
 
 # Logging
 structlog>=24.1.0
