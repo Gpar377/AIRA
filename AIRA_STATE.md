@@ -6,7 +6,7 @@
 > If you're an agent resuming work — start here, not the codebase.
 
 **Last Updated:** 2026-05-26
-**Last Session:** Trained LSTM model to 93.59% validation accuracy, built shared core database layer (PostgreSQL with SQLite fallback), Uvicorn FastAPI REST + WebSocket server, high-fidelity glassmorphism dashboard, and bridged Sentinel battle memory.
+**Last Session:** Phase 2 implementation — real Prometheus telemetry fetcher (2a), live K8s SDK security scanner + kubectl executor (2b), and Loki/Jaeger log diagnostic client (2c). All with graceful mock fallbacks.
 **GitHub:** https://github.com/Gpar377/AIRA
 **Local Path:** `d:\SRM KTR\projects\AIRA\`
 
@@ -30,13 +30,13 @@ Both share PostgreSQL memory, a FastAPI backend, and a React dashboard.
 ## 2. Current Build Status
 
 ```
-sentinel/       ████████████████████  100% ✅  Working, tested, proven
-neuralops/      ████████████████████  100% ✅  LSTM trained (93.59% acc), healer built!
-core/           ████████████████████  100% ✅  Shared database, unified schemas, and event pub/sub
-api/            ████████████████████  100% ✅  FastAPI REST and real-time WebSockets
-dashboard/      ████████████████████  100% ✅  Cyberpunk Glassmorphism command center
-training/       ░░░░░░░░░░░░░░░░░░░░    0% ⬜  Not started
-infra/          ████████████████████  100% ✅  K8s manifests + observability stack ready
+sentinel/       ████████████████████  100% [OK]  Phase 1 complete + Phase 2b tools done
+neuralops/      ████████████████████  100% [OK]  LSTM trained (93.59% acc), Phase 2a+2c done
+core/           ████████████████████  100% [OK]  Shared database, unified schemas, and event pub/sub
+api/            ████████████████████  100% [OK]  FastAPI REST and real-time WebSockets
+dashboard/      ████████████████████  100% [OK]  Cyberpunk Glassmorphism command center
+training/       ░░░░░░░░░░░░░░░░░░░░    0% [ ]  Not started
+infra/          ████████████████████  100% [OK]  K8s manifests + observability stack ready
 ```
 
 ---
@@ -61,15 +61,14 @@ infra/          ████████████████████  10
 | [`sentinel/agents/orchestrator.py`](./sentinel/agents/orchestrator.py) | Safety Orchestrator — OPA + kill switch + spiral detection | ✅ |
 | [`sentinel/governance/opa_engine.py`](./sentinel/governance/opa_engine.py) | OPA policy: blast radius, namespace protection | ✅ |
 | [`sentinel/graph/arena_graph.py`](./sentinel/graph/arena_graph.py) | LangGraph: Red→OPA→Blue→Memory loop | ✅ |
-| [`sentinel/tools/mock_scanner.py`](./sentinel/tools/mock_scanner.py) | Mock Trivy/kube-hunter (Phase 1 only) | ✅ |
-| [`sentinel/tools/mock_kubectl.py`](./sentinel/tools/mock_kubectl.py) | Mock kubectl remediation (Phase 1 only) | ✅ |
-| [`sentinel/requirements.txt`](./sentinel/requirements.txt) | langgraph, google-genai, rich, pydantic, dotenv | ✅ |
-| [`sentinel/.env.example`](./sentinel/.env.example) | Template: GEMINI_API_KEY, MAX_ROUNDS, etc. | ✅ |
+| [`sentinel/tools/mock_scanner.py`](./sentinel/tools/mock_scanner.py) | Mock Trivy/kube-hunter (Phase 1) | [OK] |
+| [`sentinel/tools/mock_kubectl.py`](./sentinel/tools/mock_kubectl.py) | Mock kubectl remediation (Phase 1) | [OK] |
+| [`sentinel/tools/real_scanner.py`](./sentinel/tools/real_scanner.py) | **[NEW Phase 2b]** Live Trivy + K8s SDK scanner | [OK] |
+| [`sentinel/tools/real_kubectl.py`](./sentinel/tools/real_kubectl.py) | **[NEW Phase 2b]** Real K8s SDK RBAC/secret/netpol executor | [OK] |
+| [`sentinel/requirements.txt`](./sentinel/requirements.txt) | langgraph, google-genai, rich, pydantic, dotenv | [OK] |
+| [`sentinel/.env.example`](./sentinel/.env.example) | Template: GEMINI_API_KEY, MAX_ROUNDS, etc. | [OK] |
 
-**Phase 2 files to create (real infra):**
-- `sentinel/tools/real_scanner.py` — live Trivy + CVSS blast radius
-- `sentinel/tools/real_kubectl.py` — real kubectl + snapshot rollback
-- `sentinel/real_cluster.py` — reads real K8s state
+**Phase 2 live activation:** Set `AIRA_LIVE_SCAN=true` + `kubectl` configured → real_scanner/real_kubectl activate automatically.
 
 ---
 
@@ -87,9 +86,11 @@ infra/          ████████████████████  10
 | [`neuralops/data/synthetic_metrics/generator.py`](./neuralops/data/synthetic_metrics/generator.py) | Generates training data: 4 failure patterns as time series | ✅ |
 | [`neuralops/prediction/lstm_model.py`](./neuralops/prediction/lstm_model.py) | LSTM + attention, multi-class failure detection, TTF estimation | ✅ |
 | [`neuralops/prediction/trainer.py`](./neuralops/prediction/trainer.py) | Train LSTM on synthetic data, achieve >93% val accuracy | ✅ |
-| [`neuralops/prediction/inference.py`](./neuralops/prediction/inference.py) | Real-time prediction pipeline bridging metrics to healing | ✅ |
-| [`neuralops/agent/healing_agent.py`](./neuralops/agent/healing_agent.py) | LangGraph: Predict->Diagnose->Decide->Heal->Remember | ✅ |
-| [`api/app.py`](./api/app.py) | FastAPI: Unified REST /predict, /heal, WebSocket streams | ✅ |
+| [`neuralops/prediction/inference.py`](./neuralops/prediction/inference.py) | Real-time prediction pipeline + Phase 2 `predict_from_live()` | [OK] |
+| [`neuralops/prediction/prometheus_fetcher.py`](./neuralops/prediction/prometheus_fetcher.py) | **[NEW Phase 2a]** Live PromQL fetcher building (60,12) LSTM matrix | [OK] |
+| [`neuralops/k8s_client/client.py`](./neuralops/k8s_client/client.py) | **[UPDATED Phase 2c]** K8s + Loki + Jaeger diagnostics client | [OK] |
+| [`neuralops/agent/healing_agent.py`](./neuralops/agent/healing_agent.py) | LangGraph: Predict->Diagnose->Decide->Heal->Remember | [OK] |
+| [`api/app.py`](./api/app.py) | FastAPI: Unified REST /predict, /heal, WebSocket streams | [OK] |
 
 **Failure classes the LSTM predicts:**
 - `memory_leak` — linear memory growth → OOMKill
@@ -231,10 +232,11 @@ cd d:\SRM KTR\projects\AIRA\neuralops
 | Date | What Was Done |
 |------|--------------|
 | Pre-May-2026 | SentinelArena Phase 1 built — mock infra, Gemini agents, LangGraph loop |
-| Apr-06-2026 | Fixed Windows encoding, SDK migration (google-generativeai → google-genai) |
+| Apr-06-2026 | Fixed Windows encoding, SDK migration (google-generativeai -> google-genai) |
 | Apr-18-2026 | Added llm_utils.py (retry+Pydantic), run.bat/sh launchers, Phase 3/4 docs |
 | May-25-2026 | AIRA monorepo created, NeuralOps merged in, LSTM model built, 20 commits pushed |
-| May-26-2026 | Trained LSTM model (93.59% accuracy), built shared database core layer, FastAPI Uvicorn backend, neon glassmorphism command dashboard, and bridged battle memory. |
+| May-26-2026 | Built shared database core layer, FastAPI Uvicorn backend, neon glassmorphism dashboard, battle memory bridge |
+| May-26-2026 | **Phase 2 implementation:** prometheus_fetcher.py (2a), real_scanner.py + real_kubectl.py (2b), k8s_client + Loki/Jaeger (2c), test_phase2.py verification script |
 
 ---
 
