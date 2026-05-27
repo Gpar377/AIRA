@@ -23,6 +23,11 @@ SENTINEL_DIR = Path(__file__).parent.resolve()
 AIRA_ROOT = SENTINEL_DIR.parent.resolve()
 sys.path.insert(0, str(AIRA_ROOT))
 
+# Force UTF-8 output -- prevents Windows cp1252 UnicodeEncodeError
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # Graceful K8s SDK import
 try:
     from kubernetes import client as k8s_client, config as k8s_config
@@ -224,8 +229,17 @@ def run_battle(rounds: int):
         )
         
         for line in process.stdout:
-            sys.stdout.write(line)
-            sys.stdout.flush()
+            try:
+                sys.stdout.write(line)
+                sys.stdout.flush()
+            except Exception:
+                try:
+                    # Fallback: strip/replace invalid characters using system encoding
+                    fallback_line = line.encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
+                    sys.stdout.write(fallback_line)
+                    sys.stdout.flush()
+                except Exception:
+                    pass
             
         process.wait()
         if process.returncode != 0:
