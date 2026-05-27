@@ -70,7 +70,7 @@ The platform is designed to replace periodic, manual security operations with a 
 | `training/export_trajectories.py` | DB → JSONL exporter, SQLite/PostgreSQL agnostic | ✅ Complete |
 | `training/sft_dataset.jsonl` | 5,004 samples, 9.40 MB, 100% ChatML compliant | ✅ Complete |
 | `training/test_exporter.py` | Full validation suite — all checks passing | ✅ Complete |
-| Real cluster connectors | Trivy, real kubectl, live Prometheus | ✅ Written — needs live verification |
+| Real cluster connectors | Trivy, real kubectl, live Prometheus | ✅ Verified — Trivy scanning 224 real CVEs, kubectl live |
 | `training/finetune_gemma.ipynb` | Gemma 2B QLoRA SFT notebook | 🔜 Phase 4 |
 | Gemma local inference | Ollama adapter in core/llm_client.py | 🔜 Phase 5 |
 
@@ -292,13 +292,12 @@ As AIRA accumulates trajectories across domains, the fine-tuned Gemma model beco
 
 ### 7.2 Immediate Priority Order
 
-**Why Phase 2 live verification cannot be skipped:**
+**Why bulk live battle runs cannot be skipped:**
 
-The training pipeline works (Phase 3 done). But 4 real trajectories out of 5,004 is 0.08% real data. Every real arena run on a live cluster generates ~8 real training samples. 200 live runs = 1,600 real samples. 500 live runs = 4,000 real samples. Real data is the difference between "cool project" and "publishable paper."
+Phase 2 infrastructure is deployed and verified — Kind cluster running, Prometheus/Loki/Jaeger/Alertmanager live, 4 vulnerable workloads deployed, Trivy scanning 224 real CVEs, kubectl hitting the live API. The training pipeline works (Phase 3 done). But 4 real trajectories out of 5,004 is 0.08% real data. Every real arena run on a live cluster generates ~8 real training samples. 200 live runs = 1,600 real samples. 500 live runs = 4,000 real samples. Real data is the difference between "cool project" and "publishable paper."
 
 ```
-This week   →  Phase 2 live verification
-               Start Docker Desktop → install kind → deploy vulnerable workloads
+This week   →  Bulk live battle runs (infra already deployed & verified)
                Run arena 50 times → 400 real trajectories added to corpus
 
 Next week   →  Phase 4 — Gemma 2B fine-tuning on Colab
