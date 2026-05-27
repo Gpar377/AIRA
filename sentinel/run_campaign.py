@@ -164,6 +164,7 @@ def redeploy_workloads():
                     ["kubectl", "apply", "-f", str(path)],
                     capture_output=True,
                     text=True,
+                    cwd=str(AIRA_ROOT),
                     check=True
                 )
                 logger.info("Successfully applied manifest: %s", yf)
@@ -217,6 +218,8 @@ def run_battle(rounds: int):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            cwd=str(SENTINEL_DIR),
             bufsize=1
         )
         
@@ -244,12 +247,12 @@ def run_exporter():
     cmd = [sys.executable, str(exporter_path), "--output", "training/sft_dataset.jsonl", "--augment", "5000"]
     
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, cwd=str(AIRA_ROOT), check=True)
         logger.info("Successfully completed SFT Trajectory Exporter run!")
         
         # Run validation
         validator_path = AIRA_ROOT / "training" / "test_exporter.py"
-        subprocess.run([sys.executable, str(validator_path)], check=True)
+        subprocess.run([sys.executable, str(validator_path)], cwd=str(AIRA_ROOT), check=True)
         logger.info("Validation suite passed! Dataset is completely safe to train.")
     except Exception as e:
         logger.error("Exporter or validation execution failed: %s", e)
