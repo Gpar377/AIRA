@@ -162,8 +162,10 @@ def main():
         console.print("[yellow]Memory reset -- starting fresh[/yellow]")
     else:
         memory = load_memory()
-        if memory.get("rounds"):
-            console.print(f"[cyan]Loaded memory from {len(memory['rounds'])} previous rounds[/cyan]")
+        if memory.get("patched_resources") or memory.get("red_learned"):
+            console.print(f"[cyan]Loaded active memory (Session: {memory.get('arena_id')})[/cyan]")
+            console.print(f"  * Patched resources: {len(memory.get('patched_resources', []))}")
+            console.print(f"  * Learned attack rules: {len(memory.get('red_learned', []))}")
         else:
             console.print("[dim]Starting with empty memory (round 1)[/dim]")
 
