@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: disk-pressure
-        image: neuralops/disk-pressure-service:latest
+        image: postgres:9.6-alpine
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8083
@@ -32,6 +32,8 @@ spec:
           value: "50"
         - name: PRESSURE_ENABLED
           value: "true"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
         resources:
           requests:
             memory: "64Mi"
@@ -42,18 +44,6 @@ spec:
         volumeMounts:
         - name: temp-storage
           mountPath: /tmp
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8083
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8083
-          initialDelaySeconds: 5
-          periodSeconds: 5
       volumes:
       - name: temp-storage
         emptyDir:

@@ -152,7 +152,8 @@ def create_initial_state(memory: dict, max_rounds: int = None) -> ArenaState:
 
     reset_cluster()
     cluster = get_cluster()
-    vulns = get_all_vulnerabilities()
+    patched_resources = memory.get("patched_resources", [])
+    vulns = get_all_vulnerabilities(patched_resources=patched_resources)
     initial_score = calculate_attack_surface_score(vulns)
 
     return ArenaState(

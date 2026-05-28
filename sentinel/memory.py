@@ -4,6 +4,7 @@ Delegates to core.unified_memory for robust database storage (PostgreSQL with SQ
 """
 import os
 import sys
+import logging
 from typing import Dict, Any, List
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.unified_memory import UnifiedMemoryStore
+
+logger = logging.getLogger("sentinel.memory")
 
 # Instantiate global DB unified memory store
 _db_store = UnifiedMemoryStore()
@@ -30,6 +33,20 @@ def load_memory() -> Dict[str, Any]:
     if recent_runs:
         return recent_runs[0]
     return empty_memory()
+
+
+def init_new_session(prev_memory: Dict[str, Any]) -> Dict[str, Any]:
+    """Spawn a new, uniquely timestamped database session inheriting learnings from the previous run."""
+    new_arena_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    logger.info(f"Carrying memory forward from session {prev_memory.get('arena_id')} -> new session {new_arena_id}")
+    return _db_store.init_arena_run(
+        arena_id=new_arena_id,
+        red_learned=prev_memory.get("red_learned", []),
+        blue_learned=prev_memory.get("blue_learned", []),
+        patched_resources=prev_memory.get("patched_resources", []),
+        attempted_attacks=prev_memory.get("attempted_attacks", []),
+        successful_attacks=prev_memory.get("successful_attacks", [])
+    )
 
 
 def save_memory(memory: Dict[str, Any]) -> None:

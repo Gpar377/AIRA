@@ -186,9 +186,9 @@ def blue_agent_node(state: ArenaState) -> Dict[str, Any]:
             ))
 
     # ── Step 2: Get current vulnerabilities ──────────────────────────────────
-    vulns = get_all_vulnerabilities()
-    memory_ctx = get_blue_context(memory)
     patched_resources = memory.get("patched_resources", [])
+    vulns = get_all_vulnerabilities(patched_resources=patched_resources)
+    memory_ctx = get_blue_context(memory)
 
     unpatched_summary = "\n".join([
         f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:80]}"
@@ -255,8 +255,14 @@ Choose ONE defense action. Prioritize: 1) respond to active attack, 2) patch CRI
                 proposed_attack = dict(proposed_attack)
                 proposed_attack["outcome"] = "blocked_blue"
 
-    # Recalculate score after defense
-    updated_vulns = get_all_vulnerabilities()
+    # Recalculate score after defense, passing the newly applied patch to bypass database lag
+    local_patched = list(memory.get("patched_resources", []))
+    if success:
+        new_patch = f"{target_ns}/{target_resource}"
+        if new_patch not in local_patched:
+            local_patched.append(new_patch)
+            
+    updated_vulns = get_all_vulnerabilities(patched_resources=local_patched)
     new_score = calculate_attack_surface_score(updated_vulns)
     score_delta = round(new_score - state["attack_surface_score"], 2)
 
