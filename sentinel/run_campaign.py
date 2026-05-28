@@ -209,9 +209,11 @@ def reset_campaign_state():
 # Execution Logic
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_battle(rounds: int):
+def run_battle(rounds: int, reset_memory: bool = False):
     """Execute a single multi-turn battle using the main.py entrypoint."""
     cmd = [sys.executable, str(SENTINEL_DIR / "main.py"), "--rounds", str(rounds)]
+    if reset_memory:
+        cmd.append("--reset")
     env = os.environ.copy()
     env["AIRA_LIVE_SCAN"] = "true"
     
@@ -305,7 +307,8 @@ def main():
                 logger.info(f"Campaign {c}/{args.campaigns} | Battle {b}/{args.battles}")
                 logger.info("-----------------------------------------")
                 
-                success = run_battle(args.rounds)
+                # Reset memory for the first battle of each campaign to start fresh
+                success = run_battle(args.rounds, reset_memory=(b == 1))
                 if not success:
                     logger.warning(f"Battle {b} of Campaign {c} encountered an execution issue. Proceeding...")
                 

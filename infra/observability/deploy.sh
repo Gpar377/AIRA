@@ -29,6 +29,7 @@ helm upgrade --install loki grafana/loki-stack \
   --set loki.persistence.enabled=true \
   --set loki.persistence.size=5Gi \
   --set promtail.enabled=true \
+  --set loki.isDefault=false \
   --wait
 
 # Deploy Jaeger

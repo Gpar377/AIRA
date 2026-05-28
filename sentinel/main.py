@@ -32,7 +32,7 @@ from rich import box
 from rich.align import Align
 
 from config import settings
-from memory import load_memory, empty_memory
+from memory import load_memory, empty_memory, init_new_session
 from graph.arena_graph import build_arena_graph, create_initial_state
 
 # Force rich to use UTF-8 safe rendering
@@ -161,7 +161,8 @@ def main():
         memory = empty_memory()
         console.print("[yellow]Memory reset -- starting fresh[/yellow]")
     else:
-        memory = load_memory()
+        prev_mem = load_memory()
+        memory = init_new_session(prev_mem)
         if memory.get("patched_resources") or memory.get("red_learned"):
             console.print(f"[cyan]Loaded active memory (Session: {memory.get('arena_id')})[/cyan]")
             console.print(f"  * Patched resources: {len(memory.get('patched_resources', []))}")
@@ -199,12 +200,16 @@ def main():
     console.print("[bold white]Starting arena...[/bold white]")
     console.print(Rule(style="dim"))
 
-    final_state          = None
+    accumulated_state    = dict(initial_state)
     displayed_event_count = 0
 
     try:
         for step_output in arena.stream(initial_state, {"recursion_limit": 150}):
             for node_name, node_state in step_output.items():
+                # Merge node updates into our accumulated state
+                for k, v in node_state.items():
+                    accumulated_state[k] = v
+
                 events = node_state.get("events", [])
 
                 # Print new events
@@ -227,7 +232,7 @@ def main():
                 if node_name == "memory_update":
                     console.print(Rule(style="dim"))
 
-                final_state = node_state or final_state
+        final_state = accumulated_state
 
     except KeyboardInterrupt:
         console.print("\n[yellow]Arena interrupted.[/yellow]")

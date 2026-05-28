@@ -322,6 +322,19 @@ def update_image(namespace: str, pod_name: str, new_image: str = "nginx:1.25.3")
             return False, f"Deployment lookup failed: {exc}"
 
     old_image = dep.spec.template.spec.containers[0].image
+    
+    # Safely derive the new image from old_image to prevent destructive service overrides
+    if not new_image or new_image == "nginx:1.25.3":
+        if "nginx" in old_image:
+            new_image = "nginx:1.25.3"
+        elif "loki" in old_image:
+            new_image = "grafana/loki:2.9.4"
+        elif "prometheus" in old_image:
+            new_image = "prom/prometheus:v2.48.0"
+        else:
+            # Custom workloads: retain the original functional image to avoid ImagePullBackOff
+            new_image = old_image
+
     dep.spec.template.spec.containers[0].image = new_image
 
     try:

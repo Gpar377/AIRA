@@ -108,7 +108,8 @@ def red_agent_node(state: ArenaState) -> Dict[str, Any]:
     events = list(state["events"])
 
     # ── Step 1: Scan ──────────────────────────────────────────────────────────
-    vulns = get_all_vulnerabilities()
+    patched_resources = memory.get("patched_resources", [])
+    vulns = get_all_vulnerabilities(patched_resources=patched_resources)
     current_score = calculate_attack_surface_score(vulns)
 
     events.append(ArenaEvent(

@@ -119,8 +119,17 @@ class UnifiedMemoryStore:
         
     # ── Arena Initialization & Management ───────────────────────────────
     
-    def init_arena_run(self, arena_id: Optional[str] = None) -> Dict[str, Any]:
-        """Start a new arena run session and create its record in the database."""
+    def init_arena_run(
+        self,
+        arena_id: Optional[str] = None,
+        red_learned: Optional[List[str]] = None,
+        blue_learned: Optional[List[str]] = None,
+        patched_resources: Optional[List[str]] = None,
+        attempted_attacks: Optional[List[str]] = None,
+        successful_attacks: Optional[List[str]] = None,
+        score_timeline: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """Start a new arena run session and create its record in the database, carrying forward learned lists if provided."""
         aid = arena_id or datetime.now().strftime("%Y%m%d_%H%M%S")
         with self.db.get_session() as session:
             existing = session.query(ArenaRun).filter(ArenaRun.id == aid).first()
@@ -128,12 +137,12 @@ class UnifiedMemoryStore:
                 run = ArenaRun(
                     id=aid,
                     created_at=datetime.utcnow(),
-                    red_learned=[],
-                    blue_learned=[],
-                    patched_resources=[],
-                    attempted_attacks=[],
-                    successful_attacks=[],
-                    score_timeline=[]
+                    red_learned=red_learned or [],
+                    blue_learned=blue_learned or [],
+                    patched_resources=patched_resources or [],
+                    attempted_attacks=attempted_attacks or [],
+                    successful_attacks=successful_attacks or [],
+                    score_timeline=score_timeline or []
                 )
                 session.add(run)
                 logger.info("arena_run_db_initialized", arena_id=aid)
