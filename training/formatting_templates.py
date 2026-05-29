@@ -82,7 +82,17 @@ def build_chatml_sample(
     parameters: Dict[str, Any],
     past_actions: List[str] = None
 ) -> Dict[str, Any]:
-    """Compiles a complete instruction sample ready for HuggingFace SFT loaders."""
+    """
+    Compiles a complete instruction sample ready for HuggingFace SFT loaders.
+    
+    Note for Gemma 4 SFT Training:
+    Instead of hardcoding a raw text chat template string (which changed between Gemma 2 and 4),
+    this function outputs a structured messages list. SFTTrainer automatically applies the 
+    tokenizer's built-in chat template dynamically:
+        
+        tokenizer = AutoTokenizer.from_pretrained("google/gemma-4-e4b-it")
+        formatted = tokenizer.apply_chat_template(messages, tokenize=False)
+    """
     user_content = format_user_prompt(domain, target, observations, past_actions)
     assistant_content = format_assistant_response(reasoning, action_type, target_resource, parameters)
     
