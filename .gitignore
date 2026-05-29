@@ -59,6 +59,9 @@ sentinel/memory_store/*.json
 # Training artifacts
 training/runs/
 training/outputs/
+training/gemma-4-e4b-aira-lora/
+training/dataset_upload/
+training/llama.cpp/
 wandb/
 
 # Relational Databases
