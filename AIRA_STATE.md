@@ -35,7 +35,7 @@ neuralops/      ████████████████████  10
 core/           ████████████████████  100% [OK]  Shared database, unified schemas, and event pub/sub
 api/            ████████████████████  100% [OK]  FastAPI REST and real-time WebSockets
 dashboard/      ████████████████████  100% [OK]  Cyberpunk Glassmorphism command center
-training/       ░░░░░░░░░░░░░░░░░░░░    0% [ ]  Not started
+training/       ████████████████████  100% [OK]  Gemma 4 migration complete, QLoRA executing in cloud
 infra/          ████████████████████  100% [OK]  K8s manifests + observability stack ready
 ```
 
@@ -164,8 +164,15 @@ kubectl apply -f infra/demo-services/
 
 ---
 
-### `training/` — Fine-tuning Pipeline ⬜ NOT STARTED
-> Export arena trajectories → fine-tune Gemma 4B on them
+### `training/` — Fine-tuning Pipeline ✅ COMPLETE (Executing in Cloud)
+> Bridges local model development and cloud scaling. Ingests exported trajectories, refactors pipeline modules for native PEFT LoRA training on Gemma 4, and launches cloud optimization runs.
+
+| File | Purpose | Status |
+|------|---------|--------|
+| [`training/finetune_gemma.ipynb`](./training/finetune_gemma.ipynb) | Refactored Jupyter notebook for Bfloat16 QLoRA training using standard HF SFTTrainer, LoraConfig, and BitsAndBytesConfig | ✅ |
+| [`training/formatting_templates.py`](./training/formatting_templates.py) | Documentation detailing dynamic chat template conversion (`apply_chat_template`) for SFT | ✅ |
+| [`training/sft_dataset.jsonl`](./training/sft_dataset.jsonl) | Adversarial trajectory dataset containing 5,176 compiled training examples | ✅ |
+| [`training/kernel-metadata.json`](./training/kernel-metadata.json) | Kaggle API metadata configurations for remote push/monitoring | ✅ |
 
 ---
 
@@ -237,6 +244,7 @@ cd d:\SRM KTR\projects\AIRA\neuralops
 | May-25-2026 | AIRA monorepo created, NeuralOps merged in, LSTM model built, 20 commits pushed |
 | May-26-2026 | Built shared database core layer, FastAPI Uvicorn backend, neon glassmorphism dashboard, battle memory bridge |
 | May-26-2026 | **Phase 2 implementation:** prometheus_fetcher.py (2a), real_scanner.py + real_kubectl.py (2b), k8s_client + Loki/Jaeger (2c), test_phase2.py verification script |
+| May-29-2026 | **Phase 4 & 5 implementation:** Migrated fallback model references to `"gemma4"`. Re-engineered training notebook to standard HuggingFace `trl` + `peft` + `bitsandbytes` pipeline. Resolved target modules for Gemma 4 custom layer wrappers (`.linear`). Integrated Bfloat16 training arguments to prevent multi-GPU `GradScaler` conflict crashes. Compiled, validated, and uploaded 5,176-sample adversarial SFT dataset to Kaggle. Pushed SFT notebook and successfully launched cloud GPU training. Created dynamic system documentation and successfully committed/pushed all files to both `main` and `master` remote git branches. |
 
 ---
 
