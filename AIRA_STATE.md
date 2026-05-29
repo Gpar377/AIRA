@@ -23,7 +23,7 @@ Both share PostgreSQL memory, a FastAPI backend, and a React dashboard.
 
 **One-liner:** *Two AIs that fight each other AND heal each other, running 24/7 on your Kubernetes cluster.*
 
-**PDR (full design doc):** [`AIRA_PDR.md`](./AIRA_PDR.md)
+**PDR (full design doc):** [`AIRA_PDR*.md`](./AIRA_PDR.md)
 
 ---
 
