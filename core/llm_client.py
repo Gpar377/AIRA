@@ -45,7 +45,7 @@ class AIRALLMClient:
         self.temperature = temperature
         
         if self.backend == "ollama":
-            self.model = os.getenv("OLLAMA_MODEL", "aira-gemma")
+            self.model = os.getenv("OLLAMA_MODEL", "gemma4")
             logger.info("unified_llm_client_initialized_ollama_backend", model=self.model, url=os.getenv("OLLAMA_URL", "http://localhost:11434"))
             self.client = None
         else:
@@ -65,7 +65,7 @@ class AIRALLMClient:
         temperature: Optional[float] = None
     ) -> Optional[str]:
         """Call local Ollama instance over HTTP with exponential backoff."""
-        target_model = model or os.getenv("OLLAMA_MODEL", "aira-gemma")
+        target_model = model or os.getenv("OLLAMA_MODEL", "gemma4")
         ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         temp = temperature if temperature is not None else self.temperature
         
