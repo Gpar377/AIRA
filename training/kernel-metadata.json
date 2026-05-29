@@ -1,0 +1,17 @@
+{
+  "id": "parthivgopa/gemma-4-e4b-aira-sft",
+  "title": "Gemma 4 E4B AIRA SFT",
+  "code_file": "finetune_gemma.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "parthivgopa/aira-sft-dataset"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
