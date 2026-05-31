@@ -69,3 +69,7 @@ wandb/
 *.sqlite
 *.sqlite3
 
+# Local runtimes and scrap scripts
+bin/
+scratch/
+

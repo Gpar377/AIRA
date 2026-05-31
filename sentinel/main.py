@@ -11,6 +11,7 @@ Usage:
 """
 import sys
 import os
+os.environ["AIRA_LIVE_SCAN"] = "false"
 import argparse
 import time
 from datetime import datetime
