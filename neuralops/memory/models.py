@@ -55,7 +55,7 @@ class Incident(Base):
     actual_failure_occurred = Column(Boolean)
     
     # Relationships
-    similar_incidents = relationship("SimilarIncident", back_populates="incident")
+    similar_incidents = relationship("SimilarIncident", foreign_keys="SimilarIncident.incident_id", back_populates="incident")
     
     def to_dict(self):
         return {
