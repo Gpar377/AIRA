@@ -15,12 +15,18 @@ class Database:
     """Database connection manager"""
     
     def __init__(self, database_url: str):
-        self.engine = create_engine(
-            database_url,
-            pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20
-        )
+        if database_url.startswith("sqlite"):
+            self.engine = create_engine(
+                database_url,
+                connect_args={"check_same_thread": False}
+            )
+        else:
+            self.engine = create_engine(
+                database_url,
+                pool_pre_ping=True,
+                pool_size=10,
+                max_overflow=20
+            )
         self.SessionLocal = sessionmaker(
             autocommit=False,
             autoflush=False,
