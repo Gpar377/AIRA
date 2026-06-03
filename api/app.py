@@ -22,6 +22,18 @@ import structlog
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.db import init_core_database
+from neuralops.config import settings
+from neuralops.memory.database import init_database
+
+init_core_database()
+
+try:
+    init_database(settings.DATABASE_URL)
+except Exception as e:
+    fallback_path = Path(__file__).parent.parent / "aira_unified.db"
+    sqlite_url = f"sqlite:///{fallback_path.absolute()}".replace("\\", "/")
+    init_database(sqlite_url)
+
 from core.unified_memory import UnifiedMemoryStore
 from core.events import (
     subscribe_sentinel, unsubscribe_sentinel, publish_sentinel_event,
@@ -93,7 +105,7 @@ class IncidentHealRequest(BaseModel):
 
 @app.on_event("startup")
 def startup_event():
-    """Triggered when the FastAPI app starts. Configures database tables."""
+    print("AIRA_LIVE_SCAN value in startup_event:", os.environ.get("AIRA_LIVE_SCAN"))
     logger.info("api_server_starting")
     # Initialize SQL Database (PostgreSQL or SQLite fallback) and create tables
     init_core_database()
