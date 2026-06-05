@@ -411,14 +411,12 @@ async def sentinel_websocket(websocket: WebSocket):
     await websocket.accept()
     logger.info("sentinel_websocket_connected")
     
-    # Event queue for thread-safe cross-loop communication
     queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
     
     def on_event(event: Dict[str, Any]):
-        # Run thread-safe call to put event into async queue
-        asyncio.run_coroutine_threadsafe(queue.put(event), asyncio.get_event_loop())
+        asyncio.run_coroutine_threadsafe(queue.put(event), loop)
         
-    # Subscribe Uvicorn websocket callback to global Sentinel event bus
     subscribe_sentinel(on_event)
     
     try:
@@ -441,9 +439,10 @@ async def neuralops_websocket(websocket: WebSocket):
     logger.info("neuralops_websocket_connected")
     
     queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
     
     def on_event(event: Dict[str, Any]):
-        asyncio.run_coroutine_threadsafe(queue.put(event), asyncio.get_event_loop())
+        asyncio.run_coroutine_threadsafe(queue.put(event), loop)
         
     subscribe_neuralops(on_event)
     
