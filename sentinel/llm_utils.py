@@ -11,38 +11,19 @@ Usage:
 import time
 import json
 import re
+import sys
+from pathlib import Path
 from typing import Optional, Tuple, Any
 
 from pydantic import BaseModel, field_validator, model_validator
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from core.llm_client import get_llm_client
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Retry Wrapper
-# ─────────────────────────────────────────────────────────────────────────────
 
 def call_gemini(client, model: str, prompt: str, max_retries: int = 3) -> Optional[str]:
-    """
-    Call Gemini with exponential backoff retry.
-    Returns response text, or None if all retries fail (caller uses fallback).
-
-    Retry schedule: 1s → 2s → 4s
-    """
-    last_error = None
-    for attempt in range(max_retries):
-        try:
-            response = client.models.generate_content(
-                model=model,
-                contents=prompt,
-            )
-            return response.text
-        except Exception as e:
-            last_error = e
-            if attempt < max_retries - 1:
-                wait = 2 ** attempt   # 1, 2, 4 seconds
-                time.sleep(wait)
-
-    # All retries exhausted — return None so caller uses rule-based fallback
-    return None
+    llm_client = get_llm_client()
+    return llm_client.call_gemini(prompt=prompt, max_retries=max_retries, model=model)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -153,10 +134,36 @@ class BlueActionSchema(BaseModel):
 
     @classmethod
     def parse_llm_output(cls, text: str) -> Tuple["BlueActionSchema", bool]:
-        """
-        Parse and validate LLM output.
-        Returns (schema, is_valid).
-        """
+        data = extract_json(text)
+        if data is None:
+            return cls(), False
+        try:
+            return cls(**data), True
+        except Exception:
+            return cls(), False
+
+
+class PurpleActionSchema(BaseModel):
+    pattern_synthesis: str = ""
+    blind_spots: str = ""
+    recommended_defense_type: str = "rbac_patch"
+    recommended_target_namespace: str = "default"
+    recommended_target_resource: str = "unknown"
+    recommendation_rationale: str = ""
+
+    @field_validator("recommended_defense_type")
+    @classmethod
+    def valid_defense_type(cls, v: str) -> str:
+        v = v.lower().strip()
+        return v if v in VALID_DEFENSE_TYPES else "rbac_patch"
+
+    @field_validator("recommended_target_namespace", "recommended_target_resource")
+    @classmethod
+    def non_empty(cls, v: str) -> str:
+        return v.strip() if v and v.strip() else "default"
+
+    @classmethod
+    def parse_llm_output(cls, text: str) -> Tuple["PurpleActionSchema", bool]:
         data = extract_json(text)
         if data is None:
             return cls(), False
