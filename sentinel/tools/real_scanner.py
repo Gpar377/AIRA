@@ -575,34 +575,19 @@ def calculate_attack_surface_score(vulns: List[VulnFinding]) -> float:
         if v["patched"] or not v["exploitable"]:
             continue
             
-        # Classify the vulnerability into its sector
+        # Classify the vulnerability into its sector using unified keywords
         res_lower = v["resource"].lower()
-        vuln_type = v["vuln_type"].lower()
         
-        # Check for system-level RBAC/Network policy/Privilege findings
-        if vuln_type in ("rbac", "network", "privilege", "secret"):
-            if "cascading-timeout" in res_lower:
-                active_sectors["cascading-timeout"] = max(active_sectors["cascading-timeout"], 20.0)
-            elif "cpu-throttle" in res_lower:
-                active_sectors["cpu-throttle"] = max(active_sectors["cpu-throttle"], 20.0)
-            elif "disk-pressure" in res_lower:
-                active_sectors["disk-pressure"] = max(active_sectors["disk-pressure"], 20.0)
-            elif "memory-leak" in res_lower:
-                active_sectors["memory-leak"] = max(active_sectors["memory-leak"], 20.0)
-            else:
-                active_sectors["system-rbac"] = max(active_sectors["system-rbac"], 20.0)
+        if "cascading" in res_lower or "nginx" in res_lower or "webapp" in res_lower:
+            active_sectors["cascading-timeout"] = max(active_sectors["cascading-timeout"], 20.0)
+        elif "cpu" in res_lower or "python" in res_lower or "api" in res_lower:
+            active_sectors["cpu-throttle"] = max(active_sectors["cpu-throttle"], 20.0)
+        elif "disk" in res_lower or "postgres" in res_lower or "db" in res_lower:
+            active_sectors["disk-pressure"] = max(active_sectors["disk-pressure"], 20.0)
+        elif "memory" in res_lower or "log4" in res_lower:
+            active_sectors["memory-leak"] = max(active_sectors["memory-leak"], 20.0)
         else:
-            # Standard CVE findings
-            if "cascading" in res_lower or "nginx" in res_lower:
-                active_sectors["cascading-timeout"] = max(active_sectors["cascading-timeout"], 20.0)
-            elif "cpu" in res_lower or "python" in res_lower:
-                active_sectors["cpu-throttle"] = max(active_sectors["cpu-throttle"], 20.0)
-            elif "disk" in res_lower or "postgres" in res_lower:
-                active_sectors["disk-pressure"] = max(active_sectors["disk-pressure"], 20.0)
-            elif "memory" in res_lower or "log4" in res_lower:
-                active_sectors["memory-leak"] = max(active_sectors["memory-leak"], 20.0)
-            else:
-                active_sectors["system-rbac"] = max(active_sectors["system-rbac"], 20.0)
+            active_sectors["system-rbac"] = max(active_sectors["system-rbac"], 20.0)
 
     score = sum(active_sectors.values())
     return max(round(score, 1), 5.0)
