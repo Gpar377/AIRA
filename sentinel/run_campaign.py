@@ -218,36 +218,17 @@ def run_battle(rounds: int, reset_memory: bool = False):
     env["AIRA_LIVE_SCAN"] = "true"
     
     try:
-        # Run subprocess and stream output directly to console
-        process = subprocess.Popen(
+        # Run subprocess directly, letting output flow to stdout/stderr naturally
+        subprocess.run(
             cmd,
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
             cwd=str(SENTINEL_DIR),
-            bufsize=1
+            check=True
         )
-        
-        for line in process.stdout:
-            try:
-                sys.stdout.write(line)
-                sys.stdout.flush()
-            except Exception:
-                try:
-                    # Fallback: strip/replace invalid characters using system encoding
-                    fallback_line = line.encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
-                    sys.stdout.write(fallback_line)
-                    sys.stdout.flush()
-                except Exception:
-                    pass
-            
-        process.wait()
-        if process.returncode != 0:
-            logger.error("Battle run exited with error code: %d", process.returncode)
-            return False
         return True
+    except subprocess.CalledProcessError as e:
+        logger.error("Battle run exited with error code: %d", e.returncode)
+        return False
     except Exception as e:
         logger.error("Subprocess execution failed: %s", e)
         return False
