@@ -65,7 +65,9 @@ class AIRALLMClient:
         temperature: Optional[float] = None
     ) -> Optional[str]:
         """Call local Ollama instance over HTTP with exponential backoff."""
-        target_model = model or os.getenv("OLLAMA_MODEL", "gemma4")
+        target_model = os.getenv("OLLAMA_MODEL", "gemma4")
+        if model and not model.startswith("gemini"):
+            target_model = model
         ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         temp = temperature if temperature is not None else self.temperature
         
@@ -90,7 +92,7 @@ class AIRALLMClient:
                 response = httpx.post(
                     f"{ollama_url}/api/chat",
                     json=payload,
-                    timeout=90.0
+                    timeout=300.0
                 )
                 if response.status_code == 200:
                     resp_json = response.json()
@@ -112,12 +114,12 @@ class AIRALLMClient:
     def call_gemini(
         self,
         prompt: str,
-        max_retries: int = 3,
+        max_retries: int = 5,
         model: Optional[str] = None,
         temperature: Optional[float] = None
     ) -> Optional[str]:
         """
-        Callconfigured LLM backend (Gemini or local Ollama) with exponential backoff.
+        Call configured LLM backend (Gemini or local Ollama) with exponential backoff.
         
         Returns:
             String response content, or None if client/retries fail.
@@ -139,6 +141,7 @@ class AIRALLMClient:
         last_error = None
         for attempt in range(max_retries):
             try:
+                time.sleep(5)
                 response = self.client.models.generate_content(
                     model=target_model,
                     contents=prompt,
@@ -147,9 +150,22 @@ class AIRALLMClient:
                 return response.text
             except Exception as e:
                 last_error = e
-                logger.warn("llm_call_retry_triggered", attempt=attempt+1, error=str(e))
+                err_str = str(e).lower()
+                is_rate_limit = "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str
+                
+                logger.warn(
+                    "llm_call_retry_triggered", 
+                    attempt=attempt+1, 
+                    error=str(e),
+                    is_rate_limit=is_rate_limit
+                )
+                
                 if attempt < max_retries - 1:
-                    wait = 2 ** attempt  # 1, 2, 4 seconds
+                    if is_rate_limit:
+                        wait = 60
+                    else:
+                        wait = 5 * (2 ** attempt)
+                    logger.info("sleeping_before_retry", wait_seconds=wait)
                     time.sleep(wait)
                     
         logger.error("llm_call_exhausted_retries", error=str(last_error))
