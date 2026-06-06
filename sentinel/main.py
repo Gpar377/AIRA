@@ -11,7 +11,8 @@ Usage:
 """
 import sys
 import os
-os.environ["AIRA_LIVE_SCAN"] = "false"
+if "AIRA_LIVE_SCAN" not in os.environ:
+    os.environ["AIRA_LIVE_SCAN"] = "false"
 import argparse
 import time
 from datetime import datetime
@@ -108,8 +109,11 @@ def render_summary_table(state: dict) -> Table:
 
     for i, attack in enumerate(attacks):
         defense      = defenses[i] if i < len(defenses) else {}
-        score        = score_history[i + 1] if i + 1 < len(score_history) else 0.0
-        score_before = score_history[i]      if i     < len(score_history) else 0.0
+        # In score_history, index 0 is initial, and for each round:
+        # index 2*i + 1 is after Red, index 2*i + 2 is after Blue
+        score_idx    = 2 * i + 2
+        score        = score_history[score_idx] if score_idx < len(score_history) else score_history[-1]
+        score_before = score_history[score_idx - 2] if score_idx - 2 < len(score_history) else score_history[0]
         delta        = round(float(score) - float(score_before), 1)
 
         opa          = attack.get("opa_decision", "?")
