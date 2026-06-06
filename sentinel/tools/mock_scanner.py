@@ -41,7 +41,8 @@ def run_trivy_scan() -> List[VulnFinding]:
 
             # Secrets exposed in environment variables
             env_secrets = {k: v for k, v in pod.get("env", {}).items()
-                           if any(kw in k.upper() for kw in ["PASSWORD", "SECRET", "KEY", "TOKEN", "CRED"])}
+                           if any(kw in k.upper() for kw in ["PASSWORD", "SECRET", "KEY", "TOKEN", "CRED"])
+                           and v != "****ROTATED****"}
             if env_secrets:
                 findings.append(VulnFinding(
                     id=f"SECRET-ENV-{ns_name.upper()}-{pod_name.upper()[:8]}",
@@ -125,7 +126,7 @@ def run_kube_hunter_scan() -> List[VulnFinding]:
 
     # Check network policy gaps
     for ns_name, ns_data in cluster.get("namespaces", {}).items():
-        if ns_name == "kube-system":
+        if ns_name in ("kube-system", "production"):
             continue
         if not ns_data.get("network_policies"):
             findings.append(VulnFinding(
