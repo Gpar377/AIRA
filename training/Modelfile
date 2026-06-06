@@ -1,1 +1,2 @@
-FROM gemma2:2b
+FROM gemma4:e4b
+ADAPTER ./gemma-4-e4b-aira-lora
