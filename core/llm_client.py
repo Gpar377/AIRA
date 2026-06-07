@@ -15,6 +15,17 @@ import structlog
 from google import genai
 from google.genai import types
 
+# Graceful imports for multi-backend support
+try:
+    import openai
+except ImportError:
+    openai = None
+
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
+
 # Allow importing from AIRA root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -28,7 +39,7 @@ T = TypeVar('T', bound=BaseModel)
 
 
 class AIRALLMClient:
-    """Unified client manager for interacting with Gemini/Gemma models."""
+    """Unified client manager for interacting with Gemini/Gemma, Claude, and OpenAI models."""
     
     def __init__(
         self,
@@ -36,20 +47,43 @@ class AIRALLMClient:
         default_model: Optional[str] = None,
         temperature: float = 0.0
     ):
-        # Resolve backend: gemini or ollama
+        # Resolve backend: gemini, ollama, openai, claude
         self.backend = os.getenv("AIRA_LLM_BACKEND", "gemini").lower()
-        
-        # Resolve key and model from available settings sources
-        self.api_key = api_key or sentinel_settings.GEMINI_API_KEY or os.getenv("GEMINI_API_KEY", "")
-        self.model = default_model or sentinel_settings.GEMINI_MODEL or "gemini-2.0-flash"
         self.temperature = temperature
         
+        # Resolve key and model from settings or environment
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY", "") or (sentinel_settings.GEMINI_API_KEY if hasattr(sentinel_settings, "GEMINI_API_KEY") else "")
+        self.model = default_model or os.getenv("GEMINI_MODEL", "") or (sentinel_settings.GEMINI_MODEL if hasattr(sentinel_settings, "GEMINI_MODEL") else "") or "gemini-2.0-flash"
+        
         if self.backend == "ollama":
-            self.model = os.getenv("OLLAMA_MODEL", "gemma4")
+            self.model = os.getenv("OLLAMA_MODEL", "aira-model")
             logger.info("unified_llm_client_initialized_ollama_backend", model=self.model, url=os.getenv("OLLAMA_URL", "http://localhost:11434"))
             self.client = None
+        elif self.backend == "openai":
+            self.model = default_model or os.getenv("OPENAI_MODEL", "gpt-4o")
+            self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
+            if not openai:
+                logger.warning("openai_package_not_installed_please_pip_install")
+            elif not self.api_key:
+                logger.warning("openai_api_key_missing_please_set_env_var")
+            else:
+                logger.info("unified_llm_client_initialized_openai_backend", model=self.model)
+            self.client = None
+        elif self.backend in ("claude", "anthropic"):
+            self.model = default_model or os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+            self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY", "")
+            if not anthropic:
+                logger.warning("anthropic_package_not_installed_please_pip_install")
+            elif not self.api_key:
+                logger.warning("anthropic_api_key_missing_please_set_env_var")
+            else:
+                logger.info("unified_llm_client_initialized_claude_backend", model=self.model)
+            self.client = None
         else:
-            # Instantiate Google GenAI client if key is present
+            # Default to Gemini
+            self.backend = "gemini"
+            if not self.api_key:
+                self.api_key = sentinel_settings.GEMINI_API_KEY or os.getenv("GEMINI_API_KEY", "")
             if self.api_key:
                 self.client = genai.Client(api_key=self.api_key)
                 logger.info("unified_llm_client_initialized_gemini_backend", model=self.model)
@@ -111,6 +145,81 @@ class AIRALLMClient:
         logger.error("ollama_call_exhausted_retries", error=last_error)
         return None
 
+    def call_openai(
+        self,
+        prompt: str,
+        max_retries: int = 3,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None
+    ) -> Optional[str]:
+        """Call OpenAI API with exponential backoff retries."""
+        if not openai:
+            logger.error("openai_package_not_installed")
+            return None
+        target_model = model or self.model or "gpt-4o"
+        temp = temperature if temperature is not None else self.temperature
+        
+        api_key = self.api_key or os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            logger.error("openai_api_key_missing")
+            return None
+            
+        client = openai.OpenAI(api_key=api_key)
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                response = client.chat.completions.create(
+                    model=target_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=temp
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                last_error = e
+                logger.warning("openai_call_retry_triggered", attempt=attempt+1, error=str(e))
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+        logger.error("openai_call_exhausted_retries", error=str(last_error))
+        return None
+
+    def call_claude(
+        self,
+        prompt: str,
+        max_retries: int = 3,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None
+    ) -> Optional[str]:
+        """Call Claude (Anthropic) API with exponential backoff retries."""
+        if not anthropic:
+            logger.error("anthropic_package_not_installed")
+            return None
+        target_model = model or self.model or "claude-3-5-sonnet-20241022"
+        temp = temperature if temperature is not None else self.temperature
+        
+        api_key = self.api_key or os.getenv("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            logger.error("anthropic_api_key_missing")
+            return None
+            
+        client = anthropic.Anthropic(api_key=api_key)
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                response = client.messages.create(
+                    model=target_model,
+                    max_tokens=4096,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=temp
+                )
+                return response.content[0].text
+            except Exception as e:
+                last_error = e
+                logger.warning("claude_call_retry_triggered", attempt=attempt+1, error=str(e))
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+        logger.error("claude_call_exhausted_retries", error=str(last_error))
+        return None
+
     def call_gemini(
         self,
         prompt: str,
@@ -119,14 +228,19 @@ class AIRALLMClient:
         temperature: Optional[float] = None
     ) -> Optional[str]:
         """
-        Call configured LLM backend (Gemini or local Ollama) with exponential backoff.
+        Call configured LLM backend (Gemini, Ollama, OpenAI, or Claude) with exponential backoff.
         
         Returns:
             String response content, or None if client/retries fail.
         """
         if self.backend == "ollama":
             return self.call_ollama(prompt, max_retries, model, temperature)
+        elif self.backend == "openai":
+            return self.call_openai(prompt, max_retries, model, temperature)
+        elif self.backend in ("claude", "anthropic"):
+            return self.call_claude(prompt, max_retries, model, temperature)
 
+        # Default: Gemini
         if not self.client:
             logger.warning("llm_call_skipped_no_client")
             return None
