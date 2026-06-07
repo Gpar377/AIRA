@@ -188,11 +188,15 @@ def blue_agent_node(state: ArenaState) -> Dict[str, Any]:
     # ── Step 2: Get current vulnerabilities ──────────────────────────────────
     patched_resources = memory.get("patched_resources", [])
     vulns = get_all_vulnerabilities(patched_resources=patched_resources)
+    unpatched_vulns = [v for v in vulns if not v["patched"]]
+    severity_map = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "UNKNOWN": 4}
+    unpatched_vulns = sorted(unpatched_vulns, key=lambda x: severity_map.get(x["severity"], 4))
+    unpatched_vulns = unpatched_vulns[:15]
     memory_ctx = get_blue_context(memory)
 
     unpatched_summary = "\n".join([
         f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:80]}"
-        for v in vulns if not v["patched"]
+        for v in unpatched_vulns
     ])
 
     alerts_summary = "\n".join([

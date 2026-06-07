@@ -125,6 +125,9 @@ def red_agent_node(state: ArenaState) -> Dict[str, Any]:
 
     # ── Step 2: Build prompt ──────────────────────────────────────────────────
     unpatched_vulns = [v for v in vulns if not v["patched"] and v["exploitable"]]
+    severity_map = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "UNKNOWN": 4}
+    unpatched_vulns = sorted(unpatched_vulns, key=lambda x: severity_map.get(x["severity"], 4))
+    unpatched_vulns = unpatched_vulns[:15]
     memory_ctx = get_red_context(memory)
 
     vuln_summary = "\n".join([
