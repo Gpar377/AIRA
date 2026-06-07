@@ -366,7 +366,7 @@ def run_trivy_scan(namespaces: Optional[List[str]] = None, patched_resources: Op
                                         break
                                 findings.append(VulnFinding(
                                     id=secret_id,
-                                    resource=f"{pod_name env vars}",
+                                    resource=f"{pod_name} env vars",
                                     namespace=ns,
                                     vuln_type="secret",
                                     severity="CRITICAL",
