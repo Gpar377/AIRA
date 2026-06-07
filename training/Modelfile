@@ -1,2 +1,2 @@
-FROM gemma2:2b
+FROM gemma4:e4b
 ADAPTER D:\aira_training_temp\
