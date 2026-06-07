@@ -424,28 +424,7 @@ def run_trivy_scan(namespaces: Optional[List[str]] = None, patched_resources: Op
         return findings
     except Exception as exc:
         logger.warning("Error during live Trivy scan: %s. Falling back to mock scanner.", exc)
-        return _mock_trivy_fallback()d=is_patched,
-                    ))
-
-    # Merge mock trivy findings as a graceful baseline fallback to guarantee image-level CVE availability only when not in live scan mode
-    if not LIVE_SCAN_ENABLED:
-        try:
-            mock_findings = _mock_trivy_fallback()
-            for mf in mock_findings:
-                if not any(f["id"] == mf["id"] for f in findings):
-                    # Set patched status based on patched_resources
-                    is_patched = False
-                    for pr in patched_resources:
-                        if pr.lower() in mf["resource"].lower() or mf["resource"].lower() in pr.lower():
-                            is_patched = True
-                            break
-                    mf["patched"] = is_patched
-                    findings.append(mf)
-        except Exception as exc:
-            logger.error("Failed to merge mock trivy fallback: %s", exc)
-
-    logger.info("Trivy scan complete: %d findings across %d namespaces", len(findings), len(namespaces))
-    return findings
+        return _mock_trivy_fallback()
 
 
 def run_kube_hunter_scan(namespaces: Optional[List[str]] = None, patched_resources: Optional[List[str]] = None) -> List[VulnFinding]:
