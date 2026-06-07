@@ -1,2 +1,2 @@
-FROM gemma4:e4b
-ADAPTER ./gemma-4-e4b-aira-lora
+FROM gemma2:2b
+ADAPTER D:\aira_training_temp\
