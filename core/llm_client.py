@@ -126,7 +126,7 @@ class AIRALLMClient:
                 response = httpx.post(
                     f"{ollama_url}/api/chat",
                     json=payload,
-                    timeout=300.0
+                    timeout=600.0
                 )
                 if response.status_code == 200:
                     resp_json = response.json()
