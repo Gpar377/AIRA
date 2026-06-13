@@ -71,18 +71,28 @@ VALID_DEFENSE_TYPES = {"rbac_patch", "secret_rotation", "network_policy", "pod_r
 
 class RedActionSchema(BaseModel):
     """Validates Red Agent attack proposals from Gemini."""
-    vuln_type: str = "network"
-    target_namespace: str = "default"
-    target_resource: str = "unknown"
-    method: str = "Reconnaissance"
-    rationale: str = ""
-    blast_radius: float = 0.3
+    vuln_type: str
+    target_namespace: str
+    target_resource: str
+    method: str
+    rationale: str
+    blast_radius: float
     chained_from: Optional[str] = None
 
     @field_validator("vuln_type")
     @classmethod
     def valid_vuln_type(cls, v: str) -> str:
         v = v.lower().strip()
+        if "cve" in v:
+            return "cve"
+        if "secret" in v:
+            return "secret"
+        if "rbac" in v:
+            return "rbac"
+        if "net" in v or "policy" in v:
+            return "network"
+        if "priv" in v or "root" in v:
+            return "privilege"
         return v if v in VALID_VULN_TYPES else "network"
 
     @field_validator("blast_radius")
@@ -94,80 +104,106 @@ class RedActionSchema(BaseModel):
     @field_validator("target_namespace", "target_resource", "method")
     @classmethod
     def non_empty(cls, v: str) -> str:
-        return v.strip() if v and v.strip() else "default"
+        if not v or not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v.strip()
 
     @classmethod
-    def parse_llm_output(cls, text: str) -> Tuple["RedActionSchema", bool]:
+    def parse_llm_output(cls, text: str) -> Tuple[Optional["RedActionSchema"], bool]:
         """
         Parse and validate LLM output.
         Returns (schema, is_valid).
-        If invalid, returns a safe default schema.
+        If invalid, returns (None, False).
         """
         data = extract_json(text)
         if data is None:
-            return cls(), False
+            return None, False
         try:
             return cls(**data), True
         except Exception:
-            return cls(), False
+            return None, False
 
 
 class BlueActionSchema(BaseModel):
     """Validates Blue Agent defense proposals from Gemini."""
-    defense_type: str = "rbac_patch"
-    target_namespace: str = "default"
-    target_resource: str = "unknown"
-    method: str = "Apply baseline hardening"
-    rationale: str = ""
-    pre_emptive: bool = False
+    defense_type: str
+    target_namespace: str
+    target_resource: str
+    method: str
+    rationale: str
+    pre_emptive: bool
 
     @field_validator("defense_type")
     @classmethod
     def valid_defense_type(cls, v: str) -> str:
         v = v.lower().strip()
+        if "rbac" in v:
+            return "rbac_patch"
+        if "secret" in v:
+            return "secret_rotation"
+        if "net" in v or "policy" in v:
+            return "network_policy"
+        if "restart" in v or "priv" in v:
+            return "pod_restart"
+        if "image" in v or "update" in v or "cve" in v:
+            return "image_update"
         return v if v in VALID_DEFENSE_TYPES else "rbac_patch"
 
     @field_validator("target_namespace", "target_resource", "method")
     @classmethod
     def non_empty(cls, v: str) -> str:
-        return v.strip() if v and v.strip() else "default"
+        if not v or not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v.strip()
 
     @classmethod
-    def parse_llm_output(cls, text: str) -> Tuple["BlueActionSchema", bool]:
+    def parse_llm_output(cls, text: str) -> Tuple[Optional["BlueActionSchema"], bool]:
         data = extract_json(text)
         if data is None:
-            return cls(), False
+            return None, False
         try:
             return cls(**data), True
         except Exception:
-            return cls(), False
+            return None, False
 
 
 class PurpleActionSchema(BaseModel):
-    pattern_synthesis: str = ""
-    blind_spots: str = ""
-    recommended_defense_type: str = "rbac_patch"
-    recommended_target_namespace: str = "default"
-    recommended_target_resource: str = "unknown"
-    recommendation_rationale: str = ""
+    pattern_synthesis: str
+    blind_spots: str
+    recommended_defense_type: str
+    recommended_target_namespace: str
+    recommended_target_resource: str
+    recommendation_rationale: str
 
     @field_validator("recommended_defense_type")
     @classmethod
     def valid_defense_type(cls, v: str) -> str:
         v = v.lower().strip()
+        if "rbac" in v:
+            return "rbac_patch"
+        if "secret" in v:
+            return "secret_rotation"
+        if "net" in v or "policy" in v:
+            return "network_policy"
+        if "restart" in v or "priv" in v:
+            return "pod_restart"
+        if "image" in v or "update" in v or "cve" in v:
+            return "image_update"
         return v if v in VALID_DEFENSE_TYPES else "rbac_patch"
 
     @field_validator("recommended_target_namespace", "recommended_target_resource")
     @classmethod
     def non_empty(cls, v: str) -> str:
-        return v.strip() if v and v.strip() else "default"
+        if not v or not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v.strip()
 
     @classmethod
-    def parse_llm_output(cls, text: str) -> Tuple["PurpleActionSchema", bool]:
+    def parse_llm_output(cls, text: str) -> Tuple[Optional["PurpleActionSchema"], bool]:
         data = extract_json(text)
         if data is None:
-            return cls(), False
+            return None, False
         try:
             return cls(**data), True
         except Exception:
-            return cls(), False
+            return None, False

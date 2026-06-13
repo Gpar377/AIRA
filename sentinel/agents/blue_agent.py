@@ -49,17 +49,27 @@ AVAILABLE DEFENSE ACTIONS:
 - pod_restart: Restart pod with privileged:false and non-root security context
 - image_update: Update container image to patched version
 
+DEFENSE MATCHING RULES:
+You MUST match your defense type to the active attack type or the target vulnerability type:
+- If the attack or vulnerability is a NETWORK attack/vulnerability, you MUST use 'network_policy'.
+- If the attack or vulnerability is a SECRET attack/vulnerability, you MUST use 'secret_rotation'.
+- If the attack or vulnerability is an RBAC attack/vulnerability, you MUST use 'rbac_patch'.
+- If the attack or vulnerability is a PRIVILEGE attack/vulnerability, you MUST use 'pod_restart'.
+- If the attack or vulnerability is a CVE attack/vulnerability, you MUST use 'image_update'.
+
+Failing to match the defense type to the attack type will result in the defense failing to block the attack.
+
 DEFENSE TYPE PRIORITY: CRITICAL severity first, then HIGH, then proactive hardening.
 
 You must respond with ONLY valid JSON (no markdown, no explanation):
-{{
+{
   "defense_type": "rbac_patch | secret_rotation | network_policy | pod_restart | image_update",
   "target_namespace": "exact namespace name",
   "target_resource": "exact resource name",
   "method": "specific remediation in 1-2 sentences",
   "rationale": "why this defense is the most effective right now",
   "pre_emptive": true or false
-}}"""
+}"""
 
 
 def _parse_llm_json(text: str) -> Dict[str, Any]:
@@ -250,19 +260,28 @@ Choose ONE defense action. Prioritize: 1) respond to active attack, 2) patch CRI
 
     # Check if attack was blocked by the defense
     if proposed_attack and proposed_attack.get("outcome") == "success":
-        attack_target = f"{proposed_attack.get('target_namespace')}/{proposed_attack.get('target_resource')}"
-        defense_target = f"{target_ns}/{target_resource}"
-        if (target_ns == proposed_attack.get("target_namespace") or
-                target_resource in proposed_attack.get("target_resource", "")):
-            # Blue successfully blocked the attack
-            if state.get("proposed_attack"):
-                proposed_attack = dict(proposed_attack)
-                proposed_attack["outcome"] = "blocked_blue"
+        attack_vuln_type = proposed_attack.get("vuln_type")
+        # Map vuln_type to expected defense_type
+        attack_to_defense_map = {
+            "network": "network_policy",
+            "secret": "secret_rotation",
+            "rbac": "rbac_patch",
+            "privilege": "pod_restart",
+            "cve": "image_update"
+        }
+        expected_defense = attack_to_defense_map.get(attack_vuln_type)
+        if defense_type == expected_defense:
+            if (target_ns == proposed_attack.get("target_namespace") or
+                    target_resource in proposed_attack.get("target_resource", "")):
+                # Blue successfully blocked the attack
+                if state.get("proposed_attack"):
+                    proposed_attack = dict(proposed_attack)
+                    proposed_attack["outcome"] = "blocked_blue"
 
     # Recalculate score after defense, passing the newly applied patch to bypass database lag
     local_patched = list(memory.get("patched_resources", []))
     if success:
-        new_patch = f"{target_ns}/{target_resource}"
+        new_patch = f"{defense_type}:{target_ns}/{target_resource}"
         if new_patch not in local_patched:
             local_patched.append(new_patch)
             

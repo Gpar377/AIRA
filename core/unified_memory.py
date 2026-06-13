@@ -217,8 +217,10 @@ class UnifiedMemoryStore:
 
             # Blue patched resources
             if defense.get("outcome") == "success":
-                if defense_target not in patched_resources:
-                    patched_resources.append(defense_target)
+                defense_type = defense.get("defense_type", "unknown")
+                dtype_target = f"{defense_type}:{defense_target}"
+                if dtype_target not in patched_resources:
+                    patched_resources.append(dtype_target)
 
             # Attempted and successful attack lists
             attack_type = attack.get("vuln_type", "unknown")

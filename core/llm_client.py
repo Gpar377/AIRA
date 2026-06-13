@@ -114,6 +114,7 @@ class AIRALLMClient:
                 }
             ],
             "stream": False,
+            "format": "json",
             "options": {
                 "temperature": temp
             }

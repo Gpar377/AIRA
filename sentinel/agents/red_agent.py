@@ -34,29 +34,36 @@ def _get_client() -> genai.Client:
     if _client is None:
         _client = genai.Client(api_key=settings.GEMINI_API_KEY)
     return _client
-
-
 RED_SYSTEM_PROMPT = """You are an elite Red Team security researcher operating inside a CONTROLLED Kubernetes sandbox.
 Your mission: identify and chain vulnerabilities to simulate realistic attack scenarios.
+
+ATTACK CHAINING STRATEGY & DIVERSITY RULES:
+1. You MUST prioritize attack types in this specific chaining order when unpatched vulnerabilities are available: CVE first, then SECRET, then RBAC, and lastly NETWORK (i.e., CVE → SECRET → RBAC → NETWORK).
+2. Do NOT default to NETWORK attacks unless all other vulnerability types (CVE, SECRET, RBAC, privilege) are successfully patched or unavailable.
+3. Attempt to chain vulnerabilities logically:
+   - First round: Exploit an unpatched CVE to gain initial access to a container.
+   - Second round: Extract exposed secrets/credentials from that container or environment.
+   - Third round: Use extracted credentials/RBAC permissions to escalate privileges.
+   - Fourth round: Perform lateral network movement.
+4. Avoid resources marked as patched in your memory.
 
 RULES YOU MUST FOLLOW:
 - Only target resources that appear in the vulnerability list
 - Do NOT target kube-system namespace
 - Do NOT propose host escapes, etcd access, or deletion of all resources
 - Keep blast_radius between 0.0 and 0.74 (higher values get blocked by policy)
-- Chain vulnerabilities when possible (e.g., use RBAC access to read secrets, then use secret to pivot)
-- Avoid resources marked as patched in your memory
+- Chain vulnerabilities when possible (using the 'chained_from' field to specify the previous vuln ID)
 
 You must respond with ONLY valid JSON (no markdown, no explanation):
-{{
+{
   "vuln_type": "cve | rbac | secret | network | privilege",
   "target_namespace": "exact namespace name",
   "target_resource": "exact resource name",
   "method": "specific technique in 1-2 sentences",
-  "rationale": "why this is effective given current cluster state and memory",
+  "rationale": "why this is effective given current cluster state, chaining rules, and memory",
   "blast_radius": 0.0-0.74,
   "chained_from": "vulnerability ID this builds on, or null"
-}}"""
+}"""
 
 
 def _parse_llm_json(text: str) -> Dict[str, Any]:
@@ -130,10 +137,36 @@ def red_agent_node(state: ArenaState) -> Dict[str, Any]:
     unpatched_vulns = unpatched_vulns[:15]
     memory_ctx = get_red_context(memory)
 
-    vuln_summary = "\n".join([
-        f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:100]}"
-        for v in unpatched_vulns
-    ])
+    # Group unpatched vulnerabilities by type for cleaner presentation
+    cves = [v for v in unpatched_vulns if v["vuln_type"] == "cve"]
+    secrets = [v for v in unpatched_vulns if v["vuln_type"] == "secret"]
+    rbacs = [v for v in unpatched_vulns if v["vuln_type"] == "rbac"]
+    privs = [v for v in unpatched_vulns if v["vuln_type"] == "privilege"]
+    networks = [v for v in unpatched_vulns if v["vuln_type"] == "network"]
+
+    vuln_summary_parts = []
+    if cves:
+        vuln_summary_parts.append("CONTAINER CVEs:")
+        for v in cves:
+            vuln_summary_parts.append(f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:100]}")
+    if secrets:
+        vuln_summary_parts.append("EXPOSED SECRETS:")
+        for v in secrets:
+            vuln_summary_parts.append(f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:100]}")
+    if rbacs:
+        vuln_summary_parts.append("RBAC MISCONFIGURATIONS:")
+        for v in rbacs:
+            vuln_summary_parts.append(f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:100]}")
+    if privs:
+        vuln_summary_parts.append("PRIVILEGED CONTAINERS:")
+        for v in privs:
+            vuln_summary_parts.append(f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:100]}")
+    if networks:
+        vuln_summary_parts.append("NETWORK POLICY GAPS:")
+        for v in networks:
+            vuln_summary_parts.append(f"  [{v['severity']}] {v['id']} | {v['namespace']}/{v['resource']} | {v['description'][:100]}")
+
+    vuln_summary = "\n".join(vuln_summary_parts)
 
     prompt = f"""{RED_SYSTEM_PROMPT}
 
@@ -145,7 +178,7 @@ ATTACK SURFACE SCORE: {current_score}/100
 {memory_ctx}
 
 Round: {round_num}/{state['max_rounds']}
-Choose your next attack. Remember: chain vulnerabilities, avoid patched resources."""
+Choose your next attack. Remember: chain vulnerabilities in the order CVE → SECRET → RBAC → NETWORK. Avoid patched resources."""
 
     # ── Step 3: LLM reasoning (with retry + Pydantic validation) ────────────
     raw_text = call_gemini(_get_client(), settings.GEMINI_MODEL, prompt)

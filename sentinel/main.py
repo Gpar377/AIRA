@@ -151,11 +151,16 @@ def main():
         console.print(f"[bold red]{e}[/bold red]")
         sys.exit(1)
 
+    # Resolve active model from unified client
+    from core.llm_client import get_llm_client
+    llm_client = get_llm_client()
+    model_display = f"{llm_client.backend.upper()}: {llm_client.model}"
+
     # Banner
     console.print(Text(BANNER, style="bold red"))
     console.print(Align.center(Text(SUBTITLE, style="bold white")))
     console.print(Align.center(Text(
-        f"Model: {settings.GEMINI_MODEL}  |  Rounds: {args.rounds}  |  "
+        f"Model: {model_display}  |  Rounds: {args.rounds}  |  "
         f"Blast Radius Limit: {settings.BLAST_RADIUS_LIMIT}",
         style="dim cyan",
     )))
