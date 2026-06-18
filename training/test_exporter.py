@@ -69,7 +69,13 @@ def validate_chatml_dataset() -> bool:
                 
             # 2. Check ChatML schema keys
             messages = sample.get("messages", [])
+            source = sample.get("source")
             if not isinstance(messages, list) or len(messages) != 3:
+                schema_errors += 1
+                all_checks = False
+                continue
+                
+            if source not in ("live_ollama", "gemini_distilled", "synthetic"):
                 schema_errors += 1
                 all_checks = False
                 continue

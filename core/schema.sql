@@ -13,6 +13,7 @@
 CREATE TABLE IF NOT EXISTS arena_runs (
     id VARCHAR(50) PRIMARY KEY,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL,
+    source VARCHAR(50) DEFAULT 'live_ollama' NOT NULL,
     
     -- Learnings and aggregates (JSON arrays)
     red_learned JSONB DEFAULT '[]'::jsonb NOT NULL,
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS battle_rounds (
     arena_id VARCHAR(50) NOT NULL REFERENCES arena_runs(id) ON DELETE CASCADE,
     round_number INTEGER NOT NULL,
     timestamp TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC') NOT NULL,
+    source VARCHAR(50) DEFAULT 'live_ollama' NOT NULL,
     
     -- Attack agent fields
     attack_type VARCHAR(100),

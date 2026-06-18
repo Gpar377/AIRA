@@ -62,6 +62,26 @@ class CoreDatabase:
         """Create all tables defined on Base."""
         Base.metadata.create_all(bind=self.engine)
         logger.info("core_database_tables_created")
+        
+        # Lightweight migration to add 'source' columns if missing
+        from sqlalchemy import text
+        try:
+            with self.engine.begin() as conn:
+                # 1. Migrate arena_runs
+                try:
+                    conn.execute(text("SELECT source FROM arena_runs LIMIT 1"))
+                except Exception:
+                    logger.info("migrating_database_adding_source_to_arena_runs")
+                    conn.execute(text("ALTER TABLE arena_runs ADD COLUMN source VARCHAR(50) DEFAULT 'live_ollama' NOT NULL"))
+                    
+                # 2. Migrate battle_rounds
+                try:
+                    conn.execute(text("SELECT source FROM battle_rounds LIMIT 1"))
+                except Exception:
+                    logger.info("migrating_database_adding_source_to_battle_rounds")
+                    conn.execute(text("ALTER TABLE battle_rounds ADD COLUMN source VARCHAR(50) DEFAULT 'live_ollama' NOT NULL"))
+        except Exception as e:
+            logger.error("database_migration_failed", error=str(e))
     
     def drop_tables(self):
         """Drop all tables defined on Base (use with caution)."""

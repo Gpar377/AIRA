@@ -80,7 +80,8 @@ def build_chatml_sample(
     action_type: str,
     target_resource: str,
     parameters: Dict[str, Any],
-    past_actions: List[str] = None
+    past_actions: List[str] = None,
+    source: str = "live_ollama"
 ) -> Dict[str, Any]:
     """
     Compiles a complete instruction sample ready for HuggingFace SFT loaders.
@@ -101,5 +102,6 @@ def build_chatml_sample(
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_content},
             {"role": "assistant", "content": assistant_content}
-        ]
+        ],
+        "source": source
     }

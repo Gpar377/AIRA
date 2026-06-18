@@ -20,11 +20,20 @@ logger = logging.getLogger("sentinel.memory")
 _db_store = UnifiedMemoryStore()
 
 
+def _resolve_source() -> str:
+    backend = os.getenv("AIRA_LLM_BACKEND", "ollama").lower()
+    if backend == "gemini":
+        return "gemini_distilled"
+    elif backend == "ollama":
+        return "live_ollama"
+    return f"live_{backend}"
+
+
 def empty_memory() -> Dict[str, Any]:
     """Returns a fresh memory structure and initializes the arena run session in the database."""
     arena_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Initialize the run record in SQL
-    return _db_store.init_arena_run(arena_id)
+    return _db_store.init_arena_run(arena_id, source=_resolve_source())
 
 
 def load_memory() -> Dict[str, Any]:
@@ -45,7 +54,8 @@ def init_new_session(prev_memory: Dict[str, Any]) -> Dict[str, Any]:
         blue_learned=prev_memory.get("blue_learned", []),
         patched_resources=prev_memory.get("patched_resources", []),
         attempted_attacks=prev_memory.get("attempted_attacks", []),
-        successful_attacks=prev_memory.get("successful_attacks", [])
+        successful_attacks=prev_memory.get("successful_attacks", []),
+        source=_resolve_source()
     )
 
 

@@ -216,6 +216,7 @@ def run_battle(rounds: int, reset_memory: bool = False):
         cmd.append("--reset")
     env = os.environ.copy()
     env["AIRA_LIVE_SCAN"] = "true"
+    env["AIRA_LLM_BACKEND"] = os.getenv("AIRA_LLM_BACKEND", "ollama")
     
     try:
         # Run subprocess directly, letting output flow to stdout/stderr naturally

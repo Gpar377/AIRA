@@ -23,6 +23,7 @@ class ArenaRun(Base):
     
     id = Column(String(50), primary_key=True)  # Format: YYYYMMDD_HHMMSS
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    source = Column(String(50), default="live_ollama", nullable=False)
     
     # Aggregated learning arrays (stored as JSON arrays of strings)
     red_learned = Column(JSON, default=list, nullable=False)
@@ -41,6 +42,7 @@ class ArenaRun(Base):
         return {
             "arena_id": self.id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "source": self.source,
             "red_learned": self.red_learned,
             "blue_learned": self.blue_learned,
             "patched_resources": self.patched_resources,
@@ -58,6 +60,7 @@ class BattleRound(Base):
     arena_id = Column(String(50), ForeignKey("arena_runs.id"), nullable=False, index=True)
     round_number = Column(Integer, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    source = Column(String(50), default="live_ollama", nullable=False)
     
     # Attack Agent Details
     attack_type = Column(String(100))
@@ -87,6 +90,7 @@ class BattleRound(Base):
         return {
             "round": self.round_number,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "source": self.source,
             "attack": {
                 "type": self.attack_type,
                 "target": self.attack_target,
@@ -127,7 +131,8 @@ class UnifiedMemoryStore:
         patched_resources: Optional[List[str]] = None,
         attempted_attacks: Optional[List[str]] = None,
         successful_attacks: Optional[List[str]] = None,
-        score_timeline: Optional[List[Dict[str, Any]]] = None
+        score_timeline: Optional[List[Dict[str, Any]]] = None,
+        source: str = "live_ollama"
     ) -> Dict[str, Any]:
         """Start a new arena run session and create its record in the database, carrying forward learned lists if provided."""
         aid = arena_id or datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -137,6 +142,7 @@ class UnifiedMemoryStore:
                 run = ArenaRun(
                     id=aid,
                     created_at=datetime.utcnow(),
+                    source=source,
                     red_learned=red_learned or [],
                     blue_learned=blue_learned or [],
                     patched_resources=patched_resources or [],
@@ -145,7 +151,7 @@ class UnifiedMemoryStore:
                     score_timeline=score_timeline or []
                 )
                 session.add(run)
-                logger.info("arena_run_db_initialized", arena_id=aid)
+                logger.info("arena_run_db_initialized", arena_id=aid, source=source)
                 return run.to_dict()
             return existing.to_dict()
 
@@ -167,6 +173,7 @@ class UnifiedMemoryStore:
                 arena = ArenaRun(
                     id=arena_id,
                     created_at=datetime.utcnow(),
+                    source="live_ollama",
                     red_learned=[],
                     blue_learned=[],
                     patched_resources=[],
@@ -185,6 +192,7 @@ class UnifiedMemoryStore:
                 arena_id=arena_id,
                 round_number=round_num,
                 timestamp=datetime.utcnow(),
+                source=arena.source,
                 attack_type=attack.get("vuln_type", "unknown"),
                 attack_target=attack_target,
                 attack_method=attack.get("method", ""),

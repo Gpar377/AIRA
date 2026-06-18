@@ -169,16 +169,16 @@ def main():
     # Load memory
     if args.reset:
         memory = empty_memory()
-        console.print("[yellow]Memory reset -- starting fresh[/yellow]")
+        console.print(f"[yellow]Memory reset -- starting fresh (Source: {memory.get('source', 'unknown')})[/yellow]")
     else:
         prev_mem = load_memory()
         memory = init_new_session(prev_mem)
         if memory.get("patched_resources") or memory.get("red_learned"):
-            console.print(f"[cyan]Loaded active memory (Session: {memory.get('arena_id')})[/cyan]")
+            console.print(f"[cyan]Loaded active memory (Session: {memory.get('arena_id')} | Source: {memory.get('source', 'unknown')})[/cyan]")
             console.print(f"  * Patched resources: {len(memory.get('patched_resources', []))}")
             console.print(f"  * Learned attack rules: {len(memory.get('red_learned', []))}")
         else:
-            console.print("[dim]Starting with empty memory (round 1)[/dim]")
+            console.print(f"[dim]Starting with empty memory (round 1 | Source: {memory.get('source', 'unknown')})[/dim]")
 
     console.print()
     console.print(Rule("[bold red][ RED AGENT ][/bold red] vs "

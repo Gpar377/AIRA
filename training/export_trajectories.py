@@ -49,7 +49,8 @@ def extract_real_sentinel_trajectories(conn) -> list:
         query = """
             SELECT r.arena_id, r.round_number, r.attack_type, r.attack_target, 
                    r.attack_method, r.attack_outcome, r.opa_decision,
-                   r.defense_type, r.defense_target, r.defense_method, r.defense_outcome
+                   r.defense_type, r.defense_target, r.defense_method, r.defense_outcome,
+                   r.source
             FROM battle_rounds r
             ORDER BY r.arena_id, r.round_number;
         """
@@ -57,7 +58,7 @@ def extract_real_sentinel_trajectories(conn) -> list:
         rows = cursor.fetchall()
         
         for row in rows:
-            arena_id, round_num, atk_type, atk_target, atk_method, atk_outcome, opa, def_type, def_target, def_method, def_outcome = row
+            arena_id, round_num, atk_type, atk_target, atk_method, atk_outcome, opa, def_type, def_target, def_method, def_outcome, source = row
             
             # 1. Format Red Agent decision SFT
             obs_red = [
@@ -74,7 +75,8 @@ def extract_real_sentinel_trajectories(conn) -> list:
                 reasoning=red_reasoning,
                 action_type=atk_type or "cve_probe",
                 target_resource=f"k8s://default/{atk_target}",
-                parameters={"method": atk_method}
+                parameters={"method": atk_method},
+                source=source
             )
             samples.append(red_sample)
             
@@ -94,7 +96,8 @@ def extract_real_sentinel_trajectories(conn) -> list:
                     reasoning=blue_reasoning,
                     action_type=def_type,
                     target_resource=f"k8s://default/{def_target}",
-                    parameters={"method": def_method, "past_outcome": def_outcome}
+                    parameters={"method": def_method, "past_outcome": def_outcome},
+                    source=source
                 )
                 samples.append(blue_sample)
                 
@@ -230,7 +233,7 @@ class HighFidelitySimulator:
                 f"To secure the workload, we must execute a remediation of type {action} "
                 f"to contain the threat vector and harden the target resource."
             )
-            return build_chatml_sample("k8s", target, obs, reasoning, action, target, params)
+            return build_chatml_sample("k8s", target, obs, reasoning, action, target, params, source="synthetic")
         else:
             fail, desc, action, params = random.choice(self.k8s_failures)
             ns = random.choice(["production", "billing", "auth"])
@@ -246,7 +249,7 @@ class HighFidelitySimulator:
                 f"LSTM anomaly detection predicts failure signature {fail} on {target}. "
                 f"To maintain reliability and avoid system failure, I will execute a proactive {action}."
             )
-            return build_chatml_sample("k8s", target, obs, reasoning, action, target, params)
+            return build_chatml_sample("k8s", target, obs, reasoning, action, target, params, source="synthetic")
 
     def generate_web_sample(self) -> Dict[str, Any]:
         vuln, desc, action, params = random.choice(self.web_vulns)
@@ -263,7 +266,7 @@ class HighFidelitySimulator:
             f"Security scan on endpoint {target} revealed a severe {vuln} vulnerability. "
             f"To secure the application interface, I will apply the {action} tool to patch the endpoint profile."
         )
-        return build_chatml_sample("web_app", target, obs, reasoning, action, target, params)
+        return build_chatml_sample("web_app", target, obs, reasoning, action, target, params, source="synthetic")
 
     def generate_net_sample(self) -> Dict[str, Any]:
         threat, desc, action, params = random.choice(self.net_intrusions)
@@ -280,7 +283,7 @@ class HighFidelitySimulator:
             f"Intrusion alarm confirms {threat} active against subnet node {target}. "
             f"Executing defensive containment via {action} to stop lateral movement and protect internal assets."
         )
-        return build_chatml_sample("network", target, obs, reasoning, action, target, params)
+        return build_chatml_sample("network", target, obs, reasoning, action, target, params, source="synthetic")
 
     def generate_dataset(self, num_samples: int) -> List[Dict[str, Any]]:
         samples = []
