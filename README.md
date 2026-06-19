@@ -78,28 +78,35 @@ python sentinel/main.py --rounds 5
 ### 5. Running a Trajectory Generation Campaign
 Launch a multi-campaign automated run to generate SFT data:
 ```powershell
-python sentinel/run_campaign.py --campaigns 5 --battles 10 --rounds 2
+python sentinel/run_campaign.py --campaigns 40 --battles 2 --rounds 5
 ```
 
 ---
 
-## 🧠 Model Fine-Tuning (SFT)
+## 🧠 Model Fine-Tuning & Evaluation (SFT)
 
 AIRA is designed to be fine-tuned on the trajectories it generates.
 
 1. **Export the Dataset**: 
-   Once your battles are complete, export and validate the SFT training dataset:
+   Once your campaigns are complete, export and validate the SFT training dataset (which yields 1,086 real trajectories consolidated with 5,000 high-fidelity synthetic trajectories for a total of **6,086 total SFT samples**):
    ```powershell
    python training/export_trajectories.py --output training/sft_dataset.jsonl --augment 5000
    python training/test_exporter.py
    ```
 2. **Train on Kaggle/Colab**:
-   Upload `sft_dataset.jsonl` along with [finetune_gemma.py](training/finetune_gemma.py) to Kaggle or Colab, configure your `HF_TOKEN` secret, and run the training pipeline.
+   Upload `sft_dataset.jsonl` along with [finetune_gemma.ipynb](training/finetune_gemma.ipynb) or [finetune_gemma.py](training/finetune_gemma.py) to Kaggle or Colab, configure your `HF_TOKEN` secret, and run the training pipeline to save LoRA adapter weights.
 3. **Verify Adapter Weights**:
    Download the completed adapter weights folder, place it in `training/gemma-4-e4b-aira-lora/`, and run the validation check:
    ```powershell
    python training/inspect_lora_keys.py
    ```
+4. **Base vs. Fine-Tuned Model Evaluation**:
+   Open Ollama and run our automated evaluation launcher to create the compiled model and run the 50-prompt comparative test:
+   ```powershell
+   .\run_eval.bat
+   ```
+   This will output a comparative markdown table to `docs/eval_report_base_vs_finetuned.md` summarizing formatting rates, latency, schema compliance, and safety.
+
 
 ---
 
