@@ -73,3 +73,7 @@ wandb/
 bin/
 scratch/
 
+# Papers and session state docs
+docs/
+AIRA_PDR*
+AIRA_STATE.md
