@@ -1,12 +1,13 @@
 """
-LangGraph Arena Graph — Wires Red Agent, Safety Orchestrator, and Blue Agent
-into a supervised multi-agent graph with conditional routing.
+LangGraph Arena Graph — Wires Red Agent, Safety Orchestrator, Blue Agent,
+and Purple Agent into a supervised multi-agent graph with conditional routing.
 
 Graph topology:
-  START → red_agent → orchestrator → blue_agent → memory_update → (loop or END)
+  START → red_agent → orchestrator → blue_agent → memory_update → (loop or purple_agent → END)
 
 The orchestrator is an interrupt-capable node — it can trigger kill switch
 which terminates the loop immediately via conditional edge routing.
+The Purple Agent runs once at battle end to produce a security posture report.
 """
 import sys
 import os
@@ -19,6 +20,7 @@ from state import ArenaState, ArenaEvent
 from agents.red_agent import red_agent_node
 from agents.orchestrator import orchestrator_node
 from agents.blue_agent import blue_agent_node
+from agents.purple_agent import purple_agent_node
 from memory import record_round, save_memory
 from config import settings
 
@@ -92,7 +94,7 @@ def memory_update_node(state: ArenaState) -> dict:
 def should_continue(state: ArenaState) -> str:
     """
     Conditional edge after memory_update.
-    Decides whether to run another round or end the arena.
+    Decides whether to run another round or end the arena via Purple Agent.
     """
     if state["kill_switch"]:
         return "end"
@@ -121,6 +123,7 @@ def build_arena_graph():
     graph.add_node("orchestrator", orchestrator_node)
     graph.add_node("blue_agent", blue_agent_node)
     graph.add_node("memory_update", memory_update_node)
+    graph.add_node("purple_agent", purple_agent_node)
 
     # Wire edges
     graph.add_edge(START, "red_agent")
@@ -128,15 +131,18 @@ def build_arena_graph():
     graph.add_edge("orchestrator", "blue_agent")   # Blue always runs (reactive or proactive)
     graph.add_edge("blue_agent", "memory_update")
 
-    # Conditional: continue looping or end
+    # Conditional: continue looping or go to Purple Agent for end-of-battle analysis
     graph.add_conditional_edges(
         "memory_update",
         should_continue,
         {
             "continue": "red_agent",
-            "end": END,
+            "end": "purple_agent",
         },
     )
+
+    # Purple Agent is the final node before END
+    graph.add_edge("purple_agent", END)
 
     return graph.compile()
 
@@ -183,4 +189,5 @@ def create_initial_state(memory: dict, max_rounds: int = None) -> ArenaState:
                     f"Initial attack surface score: {initial_score}",
             data={"initial_score": initial_score, "vuln_count": len(vulns)},
         )],
+        purple_report=None,
     )
